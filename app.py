@@ -12,9 +12,8 @@ red = None
 
 @app.get('/')
 def index():
-    return render_template('index.html')
     # Obteniendo credenciales desde la petición
-    credenciales = request.get_json()
+    #credenciales = request.get_json()
     ip = "192.168.0.1"#credenciales['ip']
     name = "R1"#credenciales['name']
     user = "r1router"#credenciales['user']
@@ -27,8 +26,8 @@ def index():
     G = red.leerTopologia() # almacena en el archivo topologia.jpg
     d = nx.json_graph.node_link_data(G)  # node-link format to serialize
     # write json
-    json.dump(d, open("static/scripts/json/force.json", "w"))
-    return render_template('static/index.html')
+    json.dump(d, open("static/json/force.json", "w"))
+    return render_template('index.html')
 
 @app.get('/monitorear')
 def monitorear():

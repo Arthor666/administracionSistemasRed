@@ -12,8 +12,8 @@ class Router:
 
     def buscarVecinos(self, routers = {}):
         if self.name in routers.keys(): # Si ya fue obtenido, no lo volvemos a obtener
-            print(routers)
             return
+
         print("Conectando a " + self.name)
         #logging.debug(mensaje)
 
@@ -32,11 +32,11 @@ class Router:
         child.expect(self.name+"#")
         child.sendline('show cdp ne | begin Device') # Obtenemos la tabla de dispositivos
         child.expect(self.name+"#")
-        tabla_dispositivos = child.before.decode().split("\r\n")
-        tabla_dispositivos = tabla_dispositivos[2:]
-        tabla_dispositivos = [x for x in tabla_dispositivos if x != '' ]
-        conectados = [x.split()[0] for x in tabla_dispositivos]
-        interfaces = [str(x.split()[1])+str(x.split()[2]) for x in tabla_dispositivos ]
+        routersVecinos = child.before.decode().split("\r\n")
+        routersVecinos = routersVecinos[2:]
+        routersVecinos = [x for x in routersVecinos if x != '' ]
+        conectados = [x.split()[0] for x in routersVecinos]
+        interfaces = [str(x.split()[1])+str(x.split()[2]) for x in routersVecinos ]
         """ Registramos el router """
         routers[self.name] = {"ip": self.ip, "user": self.user, "password": self.password, "conectados": [x.split(".")[0] for x in conectados ], "interfaces": interfaces} # Guardamos la info del dispositivo
 
@@ -49,13 +49,20 @@ class Router:
             info_dispositivo = child.before.decode().split()
 
             # Obtenemos la ip del dispositivo
-            ip = None
+            vecinos = {}
             for linea in range(0, len(info_dispositivo)):
                 if 'address:' == info_dispositivo[linea]:
-                    ip = info_dispositivo[linea+1]
+                    vecinos[str(info_dispositivo[linea+1])] =  dispositivo.split(".")[0]
 
+        child.sendline('show ip arp')
+        child.expect(self.name+"#")
+        pcConectadas = child.before.decode().split("\n")
+        pcConectadas = pcConectadas[2:]
+        pcConectadas = [x.split()[1] for x in pcConectadas[0:-1] if x.split()[2]!= "-" and not x.split()[1] in vecinos.keys()]
+        routers[self.name]["pcConectadas"] =  pcConectadas
+        for vecino in vecinos.keys():
             # Examinamos los routers vecinos
-            enrutador = Router(str(ip), dispositivo.split(".")[0], self.user, self.password)
+            enrutador = Router(vecino, vecinos[vecino], self.user, self.password)
             enrutador.buscarVecinos(routers)
 
     def configurarSNMP(self):
