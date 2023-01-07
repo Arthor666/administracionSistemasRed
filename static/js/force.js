@@ -11,7 +11,6 @@ var simulation = d3.forceSimulation()
 
 d3.json("static/json/force.json", function (error, graph) {
     if (error) throw error;
-
     var link = svg.append("g")
         .attr("class", "links")
         .selectAll("line")
@@ -33,6 +32,7 @@ d3.json("static/json/force.json", function (error, graph) {
         .text(function (d) {
             return d.id;
         });
+
 
     simulation
         .nodes(graph.nodes)
@@ -57,6 +57,9 @@ d3.json("static/json/force.json", function (error, graph) {
             });
 
         node
+            .attr("fill",function (d) {
+                return d.color;
+            })
             .attr("cx", function (d) {
                 return d.x;
             })

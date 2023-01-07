@@ -19,7 +19,10 @@ class Red():
         # Generando gráfico
         G = nx.Graph()
         for router in self.routers: # Agregando routers
-            G.add_node(router, name=router)
+            G.add_node(router, name=router,color = "red")
+            for pc in self.routers[router]["pcConectadas"]:
+                G.add_node(router, name=pc)
+                G.add_edge(router, pc)
         for r1 in self.routers: # Generando conexiones
             for r2 in self.routers[r1]["conectados"]:
                 G.add_edge(r1, r2)
