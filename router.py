@@ -4,31 +4,34 @@ import logging
 import time
 
 class Router:
-    def __init__(self, ip, name, user="root", password="root"):
+    def __init__(self, ip, name, user="root", password="root",enable = ""):
         self.ip = ip
         self.name = name
         self.user = user
         self.password = password
+        self.enable = enable
 
-    def buscarVecinos(self, routers = {}):
-        if self.name in routers.keys(): # Si ya fue obtenido, no lo volvemos a obtener
+    def buscarVecinos(self, red):
+        if self.name in red.routers.keys(): # Si ya fue obtenido, no lo volvemos a obtener
             return
-
-        print("Conectando a " + self.name)
+        if self.name not in red.routersCredentialsList.keys():
+            red.routers[self.name] = {"ip": self.ip, "user": None, "password": None, "conectados": None, "interfaces": None}
+            return
+        credenciales = red.routersCredentialsList[self.name]
         #logging.debug(mensaje)
 
         """ Nos conectamos al router """
         child = pexpect.spawn('telnet '+ self.ip)
         child.expect('Username: ')
-        child.sendline(self.user)
+        child.sendline(credenciales["nombreU"])
         child.expect('Password: ')
-        child.sendline(self.password)
+        child.sendline(credenciales["password"])
 
         """Obtenemos la tabla de dispositivos conectados """
         child.expect(self.name+">")
         child.sendline('enable')
         child.expect('Password: ')
-        child.sendline('password123')
+        child.sendline(credenciales["enable"])
         child.expect(self.name+"#")
         child.sendline('show cdp ne | begin Device') # Obtenemos la tabla de dispositivos
         child.expect(self.name+"#")
@@ -38,17 +41,15 @@ class Router:
         conectados = [x.split()[0] for x in routersVecinos]
         interfaces = [str(x.split()[1])+str(x.split()[2]) for x in routersVecinos ]
         """ Registramos el router """
-        routers[self.name] = {"ip": self.ip, "user": self.user, "password": self.password, "conectados": [x.split(".")[0] for x in conectados ], "interfaces": interfaces} # Guardamos la info del dispositivo
-
+        red.routers[self.name] = {"ip": self.ip, "user": self.user, "password": self.password, "conectados": [x.split(".")[0] for x in conectados ], "interfaces": interfaces}
 
         """ Obtenemos la informacion de cada dispositivo conectado """
         for dispositivo in conectados:
-            # Obtenemos la info del dispositivo
+
             child.sendline('sh cdp entry '+ dispositivo)
             child.expect(self.name+"#")
             info_dispositivo = child.before.decode().split()
 
-            # Obtenemos la ip del dispositivo
             vecinos = {}
             for linea in range(0, len(info_dispositivo)):
                 if 'address:' == info_dispositivo[linea]:
@@ -59,11 +60,10 @@ class Router:
         pcConectadas = child.before.decode().split("\n")
         pcConectadas = pcConectadas[2:]
         pcConectadas = [x.split()[1] for x in pcConectadas[0:-1] if x.split()[2]!= "-" and not x.split()[1] in vecinos.keys()]
-        routers[self.name]["pcConectadas"] =  pcConectadas
+        red.routers[self.name]["pcConectadas"] =  pcConectadas
         for vecino in vecinos.keys():
-            # Examinamos los routers vecinos
             enrutador = Router(vecino, vecinos[vecino], self.user, self.password)
-            enrutador.buscarVecinos(routers)
+            enrutador.buscarVecinos(red)
 
     def configurarSNMP(self):
         mensaje = "Conectando a " + self.name
