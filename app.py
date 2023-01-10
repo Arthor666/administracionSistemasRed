@@ -85,21 +85,21 @@ def levantarSNMP(router):
 
     return jsonify({"status": "ok"})
 
-@app.post('/monitorear-interfaz')
-def monitorearInterfaz():
+@app.route('/monitorear-interfaz/<dispositivo>/<interfaz>/<tiempo>')
+def monitorearInterfaz(dispositivo, interfaz, tiempo):
     """ Realizando monitoreo en interfaz de router """
     # Obteniendo parametros desde la ip
-    credenciales = request.get_json()
-    router = credenciales['router']
-    interfaz = credenciales['interfaz']
-    periodo = credenciales['periodo']
+    global red
+    if not dispositivo in red.routers.keys():
+        return ('No se encuentra el Dispositivo ' + dispositivo)
 
-    try:
-        # Realizando monitoreo
-        red.monitorear(router, intefaz, periodo)
-        return jsonify({"status": "ok"})
-    except:
-        return jsonify({"status": "Error monitoreando"}), 500
+    r = red.routers[dispositivo]
+    print(r)
+
+    if not (interfaz.replace("-", '/') in r['interfacesActivas']):
+        return "La interfaz no se encuentra activa en el dispositivo"
+    else:
+        return "Monitoreo"
 
 if __name__ == '__main__':
     app.run(debug=True)
