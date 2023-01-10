@@ -3,27 +3,39 @@ from red import Red
 import logging
 import networkx as nx
 import json
+from scapy.all import conf
 
 # logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', handlers=[logging.FileHandler('app.log')])
 logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
 
 app = Flask(__name__)
 red = None
+routersCredentialsList = {}
+
+
+@app.get('/router')
+def registrarRouter():
+    global routersCredentialsList
+    return render_template('router.html',routers = routersCredentialsList)
+
+@app.post('/router')
+def guardarRouter():
+    credenciales = request.form
+    ip = credenciales['ip']
+    name = credenciales['nombre']
+    user = credenciales['nombreU']
+    password = credenciales['password']
+    enable = credenciales['enable']
+    global routersCredentialsList
+    routersCredentialsList[name] = {"ip":ip,"nombre":name,"nombreU":user,"password":password,"enable":enable}
+    return render_template('router.html',routers = routersCredentialsList)
 
 @app.get('/')
 def index():
-    # Obteniendo credenciales desde la petición
-    #credenciales = request.get_json()
-    ip = "192.168.0.1"#credenciales['ip']
-    name = "R1"#credenciales['name']
-    user = "r1router"#credenciales['user']
-    password = "secret12"#credenciales['password']
-
-    # Asignando crecentiales a la red
     global red
-    red = Red(ip, name, user, password)
-    # Leyendo la topologia
-    G = red.leerTopologia() # almacena en el archivo topologia.jpg
+    global routersCredentialsList
+    red = Red(routersCredentialsList)
+    G = red.leerTopologia()
     d = nx.json_graph.node_link_data(G)  # node-link format to serialize
     # write json
     json.dump(d, open("static/json/force.json", "w"))

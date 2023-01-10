@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Router</title>
+  </head>
+  <body>
+    <h2>Registra Router</h2>
+    <form class="" action="/router" method="post">
+      <label for="ip">IP:</label>
+      <input id="ip" type="text" name="ip" value="">
+      <label for="nombre">Nombre:</label>
+      <input id="nombre" type="text" name="nombre" value="">
+      <label for="nombreU">Nombre de usuario:</label>
+      <input id="nombreU" type="text" name="nombreU" value="">
+      <label for="password">Password:</label>
+      <input id="password" type="password" name="password" value="secret12">
+      <label for="enable">Enable:</label>
+      <input id="enable" type="password" name="enable" value="password123">
+      <input type="submit" name="" value="Guardar">
+    </form>
+
+    <table>
+      <tr>
+        <th>IP</th>
+        <th>Nombre</th>
+        <th>Nombre Usuario</th>
+        <th>Password</th>
+        <th>Enable Password</th>
+      </tr>
+      {% for router in routers.keys() %}
+        <tr>
+          <td>{{routers[router]['ip']}}</td>
+          <td>{{routers[router]['nombre']}}</td>
+          <td>{{routers[router]['nombreU']}}</td>
+          <td>{{routers[router]['password']}}</td>
+          <td>{{routers[router]['enable']}}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </body>
+</html>

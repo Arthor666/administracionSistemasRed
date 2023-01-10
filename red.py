@@ -5,27 +5,30 @@ import matplotlib.pyplot as plt
 
 class Red():
 
-    def __init__(self, ip, name, user="root", password="root"):
-        self.ip = ip
-        self.name = name
-        self.user = user
-        self.password = password
+    def __init__(self,routersCredentialsList):
+        self.routersCredentialsList = routersCredentialsList
         self.routers = {}
 
     def leerTopologia(self):
-        # Obteniendo información de los routers
-        router_cercano = Router(self.ip, self.name, self.user, self.password)
-        router_cercano.buscarVecinos(self.routers)
+        if(self.routersCredentialsList == [] or self.routersCredentialsList == None):
+            return None
+        gatewayCredentials = list(self.routersCredentialsList.values())[0]
+        router_cercano = Router(gatewayCredentials["ip"],gatewayCredentials["nombre"],gatewayCredentials["nombreU"],gatewayCredentials["password"],gatewayCredentials["enable"])
+        router_cercano.buscarVecinos(self)
         # Generando gráfico
         G = nx.Graph()
-        for router in self.routers: # Agregando routers
-            G.add_node(router, name=router,color = "red")
-            for pc in self.routers[router]["pcConectadas"]:
-                G.add_node(router, name=pc)
-                G.add_edge(router, pc)
-        for r1 in self.routers: # Generando conexiones
-            for r2 in self.routers[r1]["conectados"]:
-                G.add_edge(r1, r2)
+        for router in self.routers:
+            if(self.routers[router]["user"] != None):
+                G.add_node(router, name=router,color = "green")
+                for pc in self.routers[router]["pcConectadas"]:
+                    G.add_node(router, name=pc)
+                    G.add_edge(router, pc)
+            else:
+                G.add_node(router, name=router,color = "yellow")
+        for r1 in self.routers:
+            if( self.routers[r1]["conectados"] != None):
+                for r2 in self.routers[r1]["conectados"]:
+                    G.add_edge(r1, r2)
         return G
         #nx.draw_networkx(G, with_labels=True, node_color="g") # Creando gráfico
         #plt.savefig("static/topologia.jpg")
