@@ -10,13 +10,59 @@ logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
 
 app = Flask(__name__)
 red = None
-routersCredentialsList = {}
+routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':'password123'}}
 
 
 @app.get('/router')
 def registrarRouter():
     global routersCredentialsList
     return render_template('router.html',routers = routersCredentialsList)
+
+@app.get('/protocols/<rname>')
+def protocolsRouter(rname):
+    global red
+    return render_template('protocol-router.html',protocols = red.routers[rname].protocols,name = rname)
+
+@app.post('/OSPF/<rname>')
+def configureOSPF(rname):
+    confOSPF =  request.form
+    global red
+    if "OSPF" not in red.routers[rname].protocols:
+        red.routers[rname].protocols["OSPF"] = {}
+    red.routers[rname].protocols["OSPF"]["area"] = confOSPF["area"]
+    if "enable" not in confOSPF:
+        red.routers[rname].protocols["OSPF"]["enable"] = False
+    else:
+        red.routers[rname].protocols["OSPF"]["enable"] = True
+    red.routers[rname].OSPF()
+    return registrarRouter()
+
+@app.post('/RIP/<rname>')
+def configureRIP(rname):
+    confRIP =  request.form
+    global red
+    if "RIP" not in red.routers[rname].protocols:
+        red.routers[rname].protocols["RIP"] = {}
+    if "enable" not in confRIP:
+        red.routers[rname].protocols["RIP"]["enable"] = False
+    else:
+        red.routers[rname].protocols["RIP"]["enable"] = True
+    red.routers[rname].RIP()
+    return registrarRouter()
+
+@app.post('/EIGRP/<rname>')
+def configureEIGRP(rname):
+    confEIGRP =  request.form
+    global red
+    if "RIP" not in red.routers[rname].protocols:
+        red.routers[rname].protocols["EIGRP"] = {}
+    if "enable" not in confEIGRP:
+        red.routers[rname].protocols["EIGRP"]["enable"] = False
+    else:
+        red.routers[rname].protocols["EIGRP"]["enable"] = True
+    red.routers[rname].EIGRP()
+    return registrarRouter()
+
 
 @app.post('/router')
 def guardarRouter():
@@ -28,7 +74,7 @@ def guardarRouter():
     enable = credenciales['enable']
     global routersCredentialsList
     routersCredentialsList[name] = {"ip":ip,"nombre":name,"nombreU":user,"password":password,"enable":enable}
-    return render_template('router.html',routers = routersCredentialsList)
+    return registrarRouter()
 
 @app.get('/')
 def index():
