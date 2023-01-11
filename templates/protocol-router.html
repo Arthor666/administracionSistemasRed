@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <h2>OSPF</h2>
+    <form class="" action="/OSPF/{{name}}" method="post">
+      <label for="area">Area:</label>
+      {% if 'OSPF' not in protocols %}
+        <input id="area" type="text" name="area" value="">
+        <label for="enable">Enable:</label>
+        <input id="enable" type="checkbox" name="enable" value="" >
+      {% else %}
+        <input type="text" name="area" id="area" value="{{protocols['OSPF']['area']}}">
+        <label for="">Enable:</label>
+        {% if protocols['OSPF']['enable'] %}
+          <input type="checkbox" name="enable" id="enable" value="" checked>
+          {% else %}
+          <input type="checkbox" name="enable" id="enable" value="" >
+        {% endif %}
+      {% endif %}
+      <input type="submit" name="" value="Guardar">
+    </form>
+    <h2>RIP</h2>
+    <form class="" action="/RIP/{{name}}" method="post">
+      <label for="enable">Enable:</label>
+      {% if 'RIP' not in protocols %}
+          <input type="checkbox" name="enable" id="enable" value="">
+      {% else %}
+        {% if protocols['RIP']['enable'] %}
+          <input type="checkbox" name="enable" id="enable" value="" checked>
+        {% else %}
+          <input type="checkbox" name="enable" id="enable" value="" >
+        {% endif %}
+      {% endif %}
+      <input type="submit" name="" value="Guardar">
+    </form>
+    <h2>EIGRP</h2>
+    <form class="" action="/EIGRP/{{name}}" method="post">
+      <label for="">Enable:</label>
+      {% if 'EIGRP' not in protocols %}
+        <input type="checkbox" name="enable" id="enable" value="">
+      {% else %}
+        {% if protocols['EIGRP']['enable'] %}
+          <input type="checkbox" name="enable" id="enable" value="" checked>
+        {% else %}
+          <input type="checkbox" name="enable" id="enable" value="" >
+        {% endif %}
+      {% endif %}
+      <input type="submit" name="" value="Guardar">
+    </form>
+  </body>
+</html>
