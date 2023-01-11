@@ -5,7 +5,7 @@ import time
 from ipaddress import IPv4Address
 
 class Router:
-    def __init__(self, ip, name, user="root", password="root",enable = "",protocols = {},conectados = None,interfaces = None,pcConectadas = {}):
+    def __init__(self, ip, name, user="root", password="root",enable = "",protocols = {},conectados = None,interfaces = {},pcConectadas = {}):
         self.ip = ip
         self.name = name
         self.user = user
@@ -14,7 +14,8 @@ class Router:
         self.protocols = protocols
         self.conectados = conectados
         self.interfaces = interfaces
-        self.pcConectadas = pcConectadas
+        self.pcConectadas = pcConectadas        
+        self.obtenerInterfaces()
 
     def buscarVecinos(self, red):
         if self.name in red.routers.keys(): # Si ya fue obtenido, no lo volvemos a obtener
@@ -47,7 +48,6 @@ class Router:
         interfaces = [str(x.split()[1])+str(x.split()[2]) for x in routersVecinos ]
         """ Registramos el router """
         red.routers[self.name] = Router(self.ip,self.name,self.user,self.password,credenciales["enable"],{},[x.split(".")[0] for x in conectados ],interfaces)
-
         """ Obtenemos la informacion de cada dispositivo conectado """
         for dispositivo in conectados:
 
@@ -231,3 +231,46 @@ class Router:
 
     def monitorear(self,intefaz, periodo):
         pass
+
+    def obtenerInterfaces(self):
+        mensaje = "Conectando a " + self.name
+        logging.debug(mensaje)
+
+        """ Nos conectamos al router """
+        child = pexpect.spawn('telnet ' + self.ip)
+        child.expect('Username: ')
+        child.sendline(self.user)
+        child.expect('Password: ')
+        child.sendline(self.password)
+
+        """ Configuramos el snmp"""
+        child.expect(self.name + "#")
+        child.sendline("show interfaces accounting");
+        child.expect(self.name + "#")
+        r = child.before
+
+        r = str(r).replace('''b'show interfaces accounting''', '')
+        r = str(r).split('FastEthernet')
+        r.pop(0)
+        l = []
+        for x in r:
+            n = x.split('\\r\\n')
+            n.pop(1)
+            l.append(n)
+        nuevaLista = []
+        for j in l:
+            nuevaLista.append(j[0].strip())
+
+        interfacess = {}
+        for n in nuevaLista:
+            estatus = {}
+            if (' is disabled' in n):
+                n = n[:3]
+                # print(n)
+                estatus.setdefault('status', 0)
+            else:
+                estatus.setdefault('status', 1)
+
+            interfacess.setdefault(n, estatus)
+
+        self.interfaces = interfacess
