@@ -30,10 +30,10 @@ class Router:
         child.sendline(credenciales["password"])
 
         """Obtenemos la tabla de dispositivos conectados """
-        child.expect(self.name+">")
-        child.sendline('enable')
-        child.expect('Password: ')
-        child.sendline(credenciales["enable"])
+       # child.expect(self.name+">")
+        #child.sendline('enable')
+        #child.expect('Password: ')
+        #child.sendline(credenciales["enable"])
         child.expect(self.name+"#")
         child.sendline('show cdp ne | begin Device') # Obtenemos la tabla de dispositivos
         child.expect(self.name+"#")
@@ -124,13 +124,12 @@ class Router:
         interfacess = {}
         for n in nuevaLista:
             estatus = {}
-            if (' is disabled' in n):
-                n = n[:3]
-                # print(n)
-                estatus.setdefault('status', 0)
-            else:
-                estatus.setdefault('status', 1)
+            if not (' is disabled' in n):
+                 estatus.setdefault('status', True)
+                 interfacess.setdefault(n, estatus)
 
-            interfacess.setdefault(n, estatus)
+               
+
+            
 
         self.interfaces = interfacess

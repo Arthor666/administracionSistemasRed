@@ -41,11 +41,6 @@ def index():
     json.dump(d, open("static/json/force.json", "w"))
     return render_template('index.html')
 
-@app.get('/monitorear')
-def monitorear():
-    """ Obtiene la pagina de monitoreo """
-    return send_file('static/monitorear.html')
-
 @app.post('/topologia')
 def obtenerTopologia():
     """ Obetener la topologia de la red e inicializa los
@@ -85,21 +80,20 @@ def levantarSNMP(router):
 
     return jsonify({"status": "ok"})
 
-@app.route('/monitorear-interfaz/<dispositivo>/<interfaz>/<tiempo>')
-def monitorearInterfaz(dispositivo, interfaz, tiempo):
+@app.get('/monitorear')
+def monitorearInterfaz():
     """ Realizando monitoreo en interfaz de router """
     # Obteniendo parametros desde la ip
-    global red
-    if not dispositivo in red.routers.keys():
-        return ('No se encuentra el Dispositivo ' + dispositivo)
+    #print(red.routers)
+    return render_template('interfaz.html',routers = red.routers)
 
-    r = red.routers[dispositivo]
-    print(r)
-
-    if not (interfaz.replace("-", '/') in r['interfacesActivas']):
-        return "La interfaz no se encuentra activa en el dispositivo"
-    else:
-        return "Monitoreo"
+@app.post('/monitorear')
+def monitorearInterfazView():
+    credenciales = request.form
+    print(credenciales)
+    InterfazCredentialsList={}
+    InterfazCredentialsList['inferfaz'] = credenciales
+    return render_template('monitoreo.html',intefaz = InterfazCredentialsList)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Router</title>
+  </head>
+  <body>
+    <h2>Monitorear Interfaces</h2>
+    <form class="" action="/monitorear" method="post">
+    
+   
+
+
+    {% for router in routers.keys()%}
+    <table>
+      <tr>
+        <th>{{router}}</th>
+        <th></th>
+      </tr>
+      {% for elementos in routers[router]['interfacesActivas']%}
+      <tr>
+      <td></td>
+      	<td>FE {{elementos}}</td>
+      	
+
+        	<td><input type="submit" id ="interfazID" value="{{elementos}}" ></td>
+      </tr>
+      {% endfor %}
+    </table>
+     {% endfor %}
+</form>
+
+   
+  </body>
+</html>
