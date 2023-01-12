@@ -73,10 +73,10 @@ class Red():
         plt.ylabel('No. Paquetes')
         plt.ylim([0, 1000])
         plt.title(titulo)
-        
+
         for n in rectas:
             plt.vlines(x=n, ymin=0, ymax=1000)
-        
+
         plt.savefig("static/grafica"+str(id)+".jpg", bbox_inches='tight')
         plt.clf()
         plt.close()
@@ -122,7 +122,7 @@ class Red():
 
 
         host = ip
-        community = 'secreta'
+        community = 'public'
         suma=0
 
         puntosx=[]
@@ -136,27 +136,27 @@ class Red():
 
         puntosx3=[]
         puntosy3=[]
-        
-        rectas=[]  
+
+        rectas=[]
         rectas1=[]
         rectas2=[]
         rectas3=[]
 
         cont=1
-        
+
         bandera=True
         bandera1=True
         bandera2=True
         bandera3=True
-                    
-        
-            
+
+
+
         while True :#cont < int(intervalo):
             if(cont==1):
                 result = int(self.snmp_query(host, community, oidIn))
                 result1 = int(self.snmp_query(host, community, oidOut))
                 result2 = int(self.snmp_query(host, community, oidErroInr))
-                result3 = int(self.snmp_query(host, community, oidErrorOut))              
+                result3 = int(self.snmp_query(host, community, oidErrorOut))
             else:
                 aux = result
                 aux1= result1
@@ -188,7 +188,7 @@ class Red():
                     if bandera1 == False:
                         rectas1.append(cont*inter)
                         bandera1 = True
-                
+
                 if paquetes2 <300 :
                     if bandera2:
                         rectas2.append(cont*inter)
@@ -197,7 +197,7 @@ class Red():
                     if bandera2== False:
                         rectas2.append(cont*inter)
                         bandera2 = True
-                
+
                 if paquetes3 <300 :
                     if bandera3:
                         rectas3.append(cont*inter)
@@ -218,7 +218,7 @@ class Red():
 
                 puntosy3.append(paquetes3)
                 puntosx3.append(cont*inter)
-            
+
             cont = cont+1
             if cont>2:
                 self.grafica(puntosx,puntosy,rectas,1,'Paquetes de Entrada')

@@ -11,12 +11,34 @@ class Router:
         self.user = user
         self.password = password
         self.enable = enable
-        self.protocols = protocols
         self.conectados = conectados
         self.interfaces = interfaces
         self.pcConectadas = pcConectadas
+        self.protocols = protocols
         if(self.password != None):
             self.obtenerInterfaces()
+            self.obtenerProtocolosActivos()
+
+    def obtenerProtocolosActivos(self):
+        child = pexpect.spawn('telnet '+ self.ip)
+        child.expect('Username: ')
+        child.sendline(self.user)
+        child.expect('Password: ')
+        child.sendline(self.password)
+        child.expect(self.name+">")
+        child.sendline('enable')
+        child.expect('Password: ')
+        child.sendline(self.enable)
+        child.expect(self.name+"#")
+        child.sendline('show ip protocols summary')
+        child.expect(self.name+"#")
+        protocols = child.before.decode().split("\n")[4:-1]
+        protocols = [x.split()[1].upper() for x in protocols if x != []]
+        for p in protocols:
+            self.protocols[p] = {"enable": True}
+        child.close()
+
+
 
     def buscarVecinos(self, red,revisados):
         if self.name in revisados: # Si ya fue obtenido, no lo volvemos a obtener
@@ -69,7 +91,7 @@ class Router:
                 red.routers[vecinos[vecino]] = Router(vecino, vecinos[vecino],None,None,None,None,None)
                 continue
             if vecinos[vecino] not in revisados:
-                red.routers[vecinos[vecino]] = Router(vecino, vecinos[vecino],red.routersCredentialsList[vecinos[vecino]]["nombreU"],red.routersCredentialsList[vecinos[vecino]]["password"],red.routersCredentialsList[vecinos[vecino]]["enable"],None,None)
+                red.routers[vecinos[vecino]] = Router(vecino, vecinos[vecino],red.routersCredentialsList[vecinos[vecino]]["nombreU"],red.routersCredentialsList[vecinos[vecino]]["password"],red.routersCredentialsList[vecinos[vecino]]["enable"])
                 red.routers[vecinos[vecino]].buscarVecinos(red,revisados)
 
     def configurarSNMP(self):
@@ -133,9 +155,12 @@ class Router:
         child.sendline("conf t")
         child.expect_exact(self.name+'(config)#')
         if not self.protocols["EIGRP"]["enable"]:
-            child.sendline("no router eigrp 1")
-            child.expect_exact(self.name+'(config)#')
-            return
+            if self.validateProtocols("EIGRP"):
+                child.sendline("no router eigrp 1")
+                child.expect_exact(self.name+'(config)#')
+                child.close()
+                return
+            self.protocols["EIGRP"]["enable"] = True
         child.sendline("router eigrp 1")
         child.expect_exact(self.name+'(config-router)#')
         child.sendline("address-family ipv4")
@@ -171,9 +196,12 @@ class Router:
         child.sendline("conf t")
         child.expect_exact(self.name+'(config)#')
         if not self.protocols["RIP"]["enable"]:
-            child.sendline("no router rip")
-            child.expect_exact(self.name+'(config)#')
-            return
+            if self.validateProtocols("RIP"):
+                child.sendline("no router rip")
+                child.expect_exact(self.name+'(config)#')
+                child.close()
+                return
+            self.protocols["RIP"]["enable"] = True
         child.sendline("router rip")
         child.expect_exact(self.name+'(config-router)#')
         child.sendline("version 2")
@@ -195,6 +223,15 @@ class Router:
         print("Rip Iniciado")
         return
 
+    def validateProtocols(self,protocol):
+        protocols = {"RIP","OSPF","EIGRP"}
+        protocols.discard(protocol)
+        for p in protocols:
+            if(p in self.protocols):
+                if(self.protocols[p]["enable"]):
+                    return True
+        return False
+
     def OSPF(self):
         child = pexpect.spawn('telnet '+ self.ip)
         child.expect('Username: ')
@@ -209,9 +246,12 @@ class Router:
         child.sendline('configure terminal')
         child.expect_exact(self.name+'(config)#')
         if not self.protocols["OSPF"]["enable"]:
-            child.sendline("no router ospf 100")
-            child.expect_exact(self.name+'(config)#')
-            return
+            if self.validateProtocols("OSPF"):
+                child.sendline("no router ospf 100")
+                child.expect_exact(self.name+'(config)#')
+                child.close()
+                return
+            self.protocols["OSPF"]["enable"] = True
         child.sendline('router ospf 100')
         child.expect_exact(self.name+'(config-router)#')
         for protocol in ["rip","eigrp 1"]:

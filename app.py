@@ -43,7 +43,7 @@ def configureOSPF(rname):
         red.routers[rname].protocols["OSPF"] = {}
     red.routers[rname].protocols["OSPF"]["area"] = confOSPF["area"]
     if "enable" not in confOSPF:
-        red.routers[rname].protocols["OSPF"]["enable"] = False
+        red.routers[rname].protocols["OSPF"]["enable"] = False		
     else:
         red.routers[rname].protocols["OSPF"]["enable"] = True
     red.routers[rname].OSPF()
