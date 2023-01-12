@@ -13,11 +13,11 @@ class Red():
         if(self.routersCredentialsList == [] or self.routersCredentialsList == None):
             return None
         gatewayCredentials = list(self.routersCredentialsList.values())[0]
-        router_cercano = Router(gatewayCredentials["ip"],gatewayCredentials["nombre"],gatewayCredentials["nombreU"],gatewayCredentials["password"],gatewayCredentials["enable"])
-        router_cercano.buscarVecinos(self)
+        self.routers[gatewayCredentials["nombre"]] = Router(gatewayCredentials["ip"],gatewayCredentials["nombre"],gatewayCredentials["nombreU"],gatewayCredentials["password"],gatewayCredentials["enable"])
+        self.routers[gatewayCredentials["nombre"]].buscarVecinos(self,[])
         # Generando gráfico
         G = nx.Graph()
-        for router in self.routers:
+        for router in self.routers:            
             if(self.routers[router].user != None):
                 G.add_node(router, name=router,color = "green")
                 for pc in self.routers[router].pcConectadas:
@@ -27,7 +27,7 @@ class Red():
                 G.add_node(router, name=router,color = "yellow")
         for r1 in self.routers:
             if( self.routers[r1].conectados != None):
-                for r2 in self.routers[r1].conectados:                    
+                for r2 in self.routers[r1].conectados:
                     G.add_edge(r1, r2)
         return G
         #nx.draw_networkx(G, with_labels=True, node_color="g") # Creando gráfico

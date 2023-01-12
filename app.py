@@ -90,7 +90,7 @@ def index():
 @app.get('/monitorear')
 def monitorear():
     """ Obtiene la pagina de monitoreo """
-    return send_file('static/monitorear.html')
+    return render_template('monitorear.html')
 
 @app.post('/topologia')
 def obtenerTopologia():
@@ -142,7 +142,7 @@ def monitorearInterfaz(dispositivo, interfaz, tiempo):
     r = red.routers[dispositivo]
     print(r)
 
-    if not (interfaz.replace("-", '/') in r['interfacesActivas']):
+    if not (interfaz.replace("-", '/') in r.interfaces):
         return "La interfaz no se encuentra activa en el dispositivo"
     else:
         return "Monitoreo"
