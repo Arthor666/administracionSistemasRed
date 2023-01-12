@@ -14,14 +14,12 @@ class Router:
         self.protocols = protocols
         self.conectados = conectados
         self.interfaces = interfaces
-        self.pcConectadas = pcConectadas        
-        self.obtenerInterfaces()
+        self.pcConectadas = pcConectadas
+        if(self.password != None):
+            self.obtenerInterfaces()
 
-    def buscarVecinos(self, red):
-        if self.name in red.routers.keys(): # Si ya fue obtenido, no lo volvemos a obtener
-            return
-        if self.name not in red.routersCredentialsList.keys():
-            red.routers[self.name] = Router(self.ip,None,None,None,None,None)
+    def buscarVecinos(self, red,revisados):
+        if self.name in revisados: # Si ya fue obtenido, no lo volvemos a obtener
             return
         credenciales = red.routersCredentialsList[self.name]
         #logging.debug(mensaje)
@@ -46,9 +44,8 @@ class Router:
         routersVecinos = [x for x in routersVecinos if x != '' ]
         conectados = [x.split()[0] for x in routersVecinos]
         interfaces = [str(x.split()[1])+str(x.split()[2]) for x in routersVecinos ]
-        """ Registramos el router """
-        red.routers[self.name] = Router(self.ip,self.name,self.user,self.password,credenciales["enable"],{},[x.split(".")[0] for x in conectados ],interfaces)
         """ Obtenemos la informacion de cada dispositivo conectado """
+        red.routers[self.name].conectados = [x.split(".")[0] for x in conectados ]        
         for dispositivo in conectados:
 
             child.sendline('sh cdp entry '+ dispositivo)
@@ -66,9 +63,14 @@ class Router:
         pcConectadas = pcConectadas[2:]
         pcConectadas = [x.split()[1] for x in pcConectadas[0:-1] if x.split()[2]!= "-" and not x.split()[1] in vecinos.keys()]
         red.routers[self.name].pcConectadas =  pcConectadas
+        revisados.append(self.name)
         for vecino in vecinos.keys():
-            enrutador = Router(vecino, vecinos[vecino], self.user, self.password)
-            enrutador.buscarVecinos(red)
+            if vecinos[vecino] not in red.routersCredentialsList.keys():
+                red.routers[vecinos[vecino]] = Router(vecino, vecinos[vecino],None,None,None,None,None)
+                continue
+            if vecinos[vecino] not in revisados:
+                red.routers[vecinos[vecino]] = Router(vecino, vecinos[vecino],red.routersCredentialsList[vecinos[vecino]]["nombreU"],red.routersCredentialsList[vecinos[vecino]]["password"],red.routersCredentialsList[vecinos[vecino]]["enable"],None,None)
+                red.routers[vecinos[vecino]].buscarVecinos(red,revisados)
 
     def configurarSNMP(self):
         mensaje = "Conectando a " + self.name
@@ -207,7 +209,7 @@ class Router:
         child.sendline('configure terminal')
         child.expect_exact(self.name+'(config)#')
         if not self.protocols["OSPF"]["enable"]:
-            child.sendline("no router ospf 100")            
+            child.sendline("no router ospf 100")
             child.expect_exact(self.name+'(config)#')
             return
         child.sendline('router ospf 100')
@@ -220,7 +222,6 @@ class Router:
                 child.sendline("redistribute "+protocol+" metric 1 subnets")
                 child.expect_exact(self.name+"(config-router)#")
         networks = self.getConnectedNetworks()
-        print(networks)
         for network in networks:
             child.sendline("network "+network[0]+" "+network[1]+" area "+self.protocols["OSPF"]["area"])
             child.expect_exact(self.name+"(config-router)#")
@@ -242,12 +243,16 @@ class Router:
         child.sendline(self.user)
         child.expect('Password: ')
         child.sendline(self.password)
-
+        child.expect(self.name+'>')
+        child.sendline('enable')
+        child.expect('Password: ')
+        child.sendline(self.enable)
         """ Configuramos el snmp"""
         child.expect(self.name + "#")
         child.sendline("show interfaces accounting");
         child.expect(self.name + "#")
         r = child.before
+        child.close()
 
         r = str(r).replace('''b'show interfaces accounting''', '')
         r = str(r).split('FastEthernet')
@@ -270,6 +275,9 @@ class Router:
 
                
 
+<<<<<<< HEAD
             
 
+=======
+>>>>>>> arreglandoProblemas
         self.interfaces = interfacess
