@@ -27,6 +27,7 @@
         <th>Nombre Usuario</th>
         <th>Password</th>
         <th>Enable Password</th>
+        <th>Editar protocolos</th>
       </tr>
       {% for router in routers.keys() %}
         <tr>
@@ -35,6 +36,7 @@
           <td>{{routers[router]['nombreU']}}</td>
           <td>{{routers[router]['password']}}</td>
           <td>{{routers[router]['enable']}}</td>
+          <td><a href ="/protocols/{{routers[router]['nombre']}}">Editar Protocolos</a></td>
         </tr>
       {% endfor %}
     </table>
