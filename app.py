@@ -154,17 +154,14 @@ def monitorearInterfaz():
 
     interfaces=[]
 
-    for i in red.routers[r]['interfacesActivas']:
+    for i in red.routers[r].interfaces:
     	interfaces.append((i,i))
 
     form.interfaz.choices=interfaces
 
     if request.method=="POST":
-
-
-        router = red.routers[r]['ip']
-
-        monitoreoHilo= threading.Thread(target=red.monitoreo,args=(red.routers[form.router.data]['ip'],form.interfaz.data,form.intervalo.data,))
+        router = red.routers[r].ip
+        monitoreoHilo= threading.Thread(target=red.monitoreo,args=(red.routers[form.router.data].ip,form.interfaz.data,form.intervalo.data,))
         monitoreoHilo.start()
         return render_template('monitoreo.html',router=form.router.data,interfaz= form.interfaz.data)
 
@@ -172,7 +169,7 @@ def monitorearInterfaz():
 
 @app.route('/interfaz/<router>')
 def interfaz(router):
-	interfaces = red.routers[router]['interfacesActivas']
+	interfaces = red.routers[router].interfaces
 
 	interArr =[]
 
@@ -186,8 +183,6 @@ def interfaz(router):
 
 
 
-<<<<<<< HEAD
-
 @app.post('/monitorear')
 def monitorearInterfazView():
     credenciales = request.form
@@ -195,12 +190,6 @@ def monitorearInterfazView():
     InterfazCredentialsList={}
     InterfazCredentialsList['inferfaz'] = credenciales
     return render_template('monitoreo.html',intefaz = InterfazCredentialsList)
-=======
-    if not (interfaz.replace("-", '/') in r.interfaces):
-        return "La interfaz no se encuentra activa en el dispositivo"
-    else:
-        return "Monitoreo"
->>>>>>> arreglandoProblemas
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -22,7 +22,7 @@ class Red():
         self.routers[gatewayCredentials["nombre"]].buscarVecinos(self,[])
         # Generando gráfico
         G = nx.Graph()
-        for router in self.routers:            
+        for router in self.routers:
             if(self.routers[router].user != None):
                 G.add_node(router, name=router,color = "green")
                 for pc in self.routers[router].pcConectadas:
@@ -50,7 +50,7 @@ class Red():
 
     def snmp_query(self,host, community, oid):
         errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(cmdgen.CommunityData(community),cmdgen.UdpTransportTarget((host, 161)),oid)
-        
+
         if errorIndication:
             print(errorIndication)
         else:
@@ -63,7 +63,7 @@ class Red():
             else:
                 for name, val in varBinds:
                     return(str(val))
-    
+
 
     def grafica(self,x,y,rectas):
         print("Haciendo grafica")
@@ -72,13 +72,13 @@ class Red():
         plt.xlabel('Tiempo')
         plt.ylabel('No. Paquetes')
         plt.ylim([0, 1000])
-        
+
         for n in rectas:
             plt.vlines(x=n, ymin=0, ymax=1000)
-        
+
         plt.savefig("static/grafica.jpg", bbox_inches='tight')
         plt.close()
-        
+
     def clear(self):
         plt.clf()
 
@@ -99,23 +99,23 @@ class Red():
                 oid='1.3.6.1.2.1.2.2.1.10.2'
             case _:
                 return None
-       
+
 
         host = ip
         community = 'secreta'
         suma=0
-        
+
         puntosx=[]
         puntosy=[]
-        rectas=[]  
+        rectas=[]
 
         cont=1
-        bandera=True            
-            
+        bandera=True
+
         while True :#cont < int(intervalo):
             if(cont==1):
                 result = int(self.snmp_query(host, community, oid))
-                
+
             else:
                 aux = result
                 result = int(self.snmp_query(host, community, oid))
@@ -129,20 +129,17 @@ class Red():
                     if bandera == False:
                         rectas.append(cont*5)
                         bandera = True
-                
-                
+
+
                 puntosy.append(paquetes)
                 puntosx.append(cont*5)
             cont = cont+1
-            
-            
+
+
             print(puntosx)
             print(puntosy)
             if cont>2:
                 self.grafica(puntosx,puntosy,rectas)
             time.sleep(int(intervalo))
-            
+
         print("Monitoreo Finalizado")
-
-    
-

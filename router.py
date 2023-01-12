@@ -32,10 +32,10 @@ class Router:
         child.sendline(credenciales["password"])
 
         """Obtenemos la tabla de dispositivos conectados """
-       # child.expect(self.name+">")
-        #child.sendline('enable')
-        #child.expect('Password: ')
-        #child.sendline(credenciales["enable"])
+        child.expect(self.name+">")
+        child.sendline('enable')
+        child.expect('Password: ')
+        child.sendline(credenciales["enable"])
         child.expect(self.name+"#")
         child.sendline('show cdp ne | begin Device') # Obtenemos la tabla de dispositivos
         child.expect(self.name+"#")
@@ -45,7 +45,7 @@ class Router:
         conectados = [x.split()[0] for x in routersVecinos]
         interfaces = [str(x.split()[1])+str(x.split()[2]) for x in routersVecinos ]
         """ Obtenemos la informacion de cada dispositivo conectado """
-        red.routers[self.name].conectados = [x.split(".")[0] for x in conectados ]        
+        red.routers[self.name].conectados = [x.split(".")[0] for x in conectados ]
         for dispositivo in conectados:
 
             child.sendline('sh cdp entry '+ dispositivo)
@@ -272,12 +272,4 @@ class Router:
             if not (' is disabled' in n):
                  estatus.setdefault('status', True)
                  interfacess.setdefault(n, estatus)
-
-               
-
-<<<<<<< HEAD
-            
-
-=======
->>>>>>> arreglandoProblemas
         self.interfaces = interfacess
