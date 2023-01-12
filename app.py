@@ -1,17 +1,29 @@
 from flask import Flask, request, jsonify, send_file, render_template
+from wtforms import SelectField
+from flask_wtf import FlaskForm 
 from red import Red
 import logging
 import networkx as nx
 import json
 from scapy.all import conf
+import os
+import threading
+
+SECRET_KEY = os.urandom(32)
+
 
 # logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', handlers=[logging.FileHandler('app.log')])
 logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
 
 app = Flask(__name__)
 red = None
+app.config['SECRET_KEY'] = SECRET_KEY
 routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':'password123'}}
 
+class Form(FlaskForm):
+	router = SelectField('router', choices=[])
+	interfaz = SelectField('interfaz', choices=[])
+	intervalo = SelectField('intervalo', choices=[])
 
 @app.get('/router')
 def registrarRouter():
@@ -87,11 +99,6 @@ def index():
     json.dump(d, open("static/json/force.json", "w"))
     return render_template('index.html')
 
-@app.get('/monitorear')
-def monitorear():
-    """ Obtiene la pagina de monitoreo """
-    return send_file('static/monitorear.html')
-
 @app.post('/topologia')
 def obtenerTopologia():
     """ Obetener la topologia de la red e inicializa los
@@ -131,21 +138,80 @@ def levantarSNMP(router):
 
     return jsonify({"status": "ok"})
 
-@app.route('/monitorear-interfaz/<dispositivo>/<interfaz>/<tiempo>')
-def monitorearInterfaz(dispositivo, interfaz, tiempo):
+@app.route('/monitorear',methods=['GET','POST'])
+def monitorearInterfaz():
     """ Realizando monitoreo en interfaz de router """
-    # Obteniendo parametros desde la ip
-    global red
-    if not dispositivo in red.routers.keys():
-        return ('No se encuentra el Dispositivo ' + dispositivo)
+    form = Form()
+    routers=[]
+    for r in red.routers.keys():
+    	routers.append((r,r))
+    
+    form.router.choices = routers
+    
+    form.intervalo.choices = [('5','5'),('10','10'),('15','15'),('30','30'),('40','40'),('60','60')]
+    
+    r = list(red.routers.keys())[0]
+    
+    interfaces=[]
+    
+    for i in red.routers[r]['interfacesActivas']:
+    	interfaces.append((i,i))
+    
+    form.interfaz.choices=interfaces
+    
+    if request.method=="POST":
+      
+       
+        router = red.routers[r]['ip']
 
-    r = red.routers[dispositivo]
-    print(r)
+        monitoreoHilo= threading.Thread(target=red.monitoreo,args=(red.routers[form.router.data]['ip'],form.interfaz.data,form.intervalo.data,))
+        monitoreoHilo.start()
+        return render_template('monitoreo.html',router=form.router.data,interfaz= form.interfaz.data)
+    
+    return render_template('interfaz.html',form=form)
+    
+@app.route('/interfaz/<router>')
+def interfaz(router):
+	interfaces = red.routers[router]['interfacesActivas']
+	
+	interArr =[]
+	
+	for inter in interfaces:
+		intObt={}
+		intObt['id']= inter
+		intObt['name'] =inter
+		interArr.append(intObt)
+	
+	return jsonify({'Interfaces':interArr})
+		
+	
 
-    if not (interfaz.replace("-", '/') in r['interfacesActivas']):
-        return "La interfaz no se encuentra activa en el dispositivo"
-    else:
-        return "Monitoreo"
+
+@app.post('/monitorear')
+def monitorearInterfazView():
+    credenciales = request.form
+    print(credenciales)
+    InterfazCredentialsList={}
+    InterfazCredentialsList['inferfaz'] = credenciales
+    return render_template('monitoreo.html',intefaz = InterfazCredentialsList)
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
