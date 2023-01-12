@@ -18,8 +18,8 @@ class Red():
         if(self.routersCredentialsList == [] or self.routersCredentialsList == None):
             return None
         gatewayCredentials = list(self.routersCredentialsList.values())[0]
-        router_cercano = Router(gatewayCredentials["ip"],gatewayCredentials["nombre"],gatewayCredentials["nombreU"],gatewayCredentials["password"],gatewayCredentials["enable"])
-        router_cercano.buscarVecinos(self)
+        self.routers[gatewayCredentials["nombre"]] = Router(gatewayCredentials["ip"],gatewayCredentials["nombre"],gatewayCredentials["nombreU"],gatewayCredentials["password"],gatewayCredentials["enable"])
+        self.routers[gatewayCredentials["nombre"]].buscarVecinos(self,[])
         # Generando gráfico
         G = nx.Graph()
         for router in self.routers:
@@ -32,7 +32,7 @@ class Red():
                 G.add_node(router, name=router,color = "yellow")
         for r1 in self.routers:
             if( self.routers[r1].conectados != None):
-                for r2 in self.routers[r1].conectados:                    
+                for r2 in self.routers[r1].conectados:
                     G.add_edge(r1, r2)
         return G
         #nx.draw_networkx(G, with_labels=True, node_color="g") # Creando gráfico
@@ -50,7 +50,7 @@ class Red():
 
     def snmp_query(self,host, community, oid):
         errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(cmdgen.CommunityData(community),cmdgen.UdpTransportTarget((host, 161)),oid)
-        
+
         if errorIndication:
             print(errorIndication)
         else:
@@ -63,7 +63,7 @@ class Red():
             else:
                 for name, val in varBinds:
                     return(str(val))
-    
+
 
     def grafica(self,x,y,rectas,id,titulo):
         print("Haciendo grafica")
@@ -80,7 +80,7 @@ class Red():
         plt.savefig("static/grafica"+str(id)+".jpg", bbox_inches='tight')
         plt.clf()
         plt.close()
-        
+
     def clear(self):
         plt.clf()
 
@@ -119,12 +119,12 @@ class Red():
                 oidErrorOut='1.3.6.1.2.1.2.2.1.20.4'
             case _:
                 return None
-       
+
 
         host = ip
         community = 'secreta'
         suma=0
-        
+
         puntosx=[]
         puntosy=[]
 
@@ -156,8 +156,7 @@ class Red():
                 result = int(self.snmp_query(host, community, oidIn))
                 result1 = int(self.snmp_query(host, community, oidOut))
                 result2 = int(self.snmp_query(host, community, oidErroInr))
-                result3 = int(self.snmp_query(host, community, oidErrorOut))
-                
+                result3 = int(self.snmp_query(host, community, oidErrorOut))              
             else:
                 aux = result
                 aux1= result1
@@ -181,7 +180,6 @@ class Red():
                     if bandera == False:
                         rectas.append(cont*inter)
                         bandera = True
-                
                 if paquetes1 <300 :
                     if bandera1:
                         rectas1.append(cont*inter)
@@ -222,17 +220,11 @@ class Red():
                 puntosx3.append(cont*inter)
             
             cont = cont+1
-            
-            
-    
             if cont>2:
                 self.grafica(puntosx,puntosy,rectas,1,'Paquetes de Entrada')
                 self.grafica(puntosx1,puntosy1,rectas1,2,'Paquetes de Salida')
                 self.grafica(puntosx2,puntosy2,rectas2,3,'Paquetes de Entrada Daniados')
                 self.grafica(puntosx3,puntosy3,rectas3,4,'Paquetes de Salida  Daniados')
             time.sleep(int(intervalo))
-            
+
         print("Monitoreo Finalizado")
-
-    
-
