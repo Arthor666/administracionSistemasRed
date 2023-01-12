@@ -5,11 +5,18 @@
     <title>Monitoreo</title>
 </head>
 <body>
-		
- <center> <h1>Monitoreo</h1><img src="{{url_for('static',filename='grafica.jpg')}}" alt="Gráfica de la interface f 0/0"></center>
 	
-	 {% for infera in intefaz.keys()%}
-		<h1>{{intefaz['ifera']}}</h1>
-		{% endfor %}
+	 <script language="JavaScript">
+            function refreshIt(element) {
+                setTimeout(function() {
+                    element.src = element.src.split('?')[0] + '?' + new Date().getTime();
+                    refreshIt(element);
+                }, 3000); // refresh every 50ms
+            }
+        </script>	
+
+ <center> <h1>Monitoreo</h1><img src="{{url_for('static',filename='grafica.jpg')}}" onload="refreshIt(this)" alt="Gráfica de la interface f 0/0"></center>
+	
+	
 </body>
 </html>

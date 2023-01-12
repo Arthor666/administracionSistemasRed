@@ -6,30 +6,31 @@
   </head>
   <body>
     <h2>Monitorear Interfaces</h2>
-    <form class="" action="/monitorear" method="post">
-    
-   
+    <form method="post">
+    	{{form.csrf_token}}
+    	{{form.router}}
+    	{{form.interfaz}}
+    	{{form.intervalo}}
+    	<input type ="Submit">
 
-
-    {% for router in routers.keys()%}
-    <table>
-      <tr>
-        <th>{{router}}</th>
-        <th></th>
-      </tr>
-      {% for elementos in routers[router]['interfacesActivas']%}
-      <tr>
-      <td></td>
-      	<td>FE {{elementos}}</td>
-      	
-
-        	<td><input type="submit" id ="interfazID" value="{{elementos}}" ></td>
-      </tr>
-      {% endfor %}
-    </table>
-     {% endfor %}
 </form>
-
-   
+	<script>
+		let router_select = document.getElementById('router');
+		let interfaz_select = document.getElementById('interfaz');
+		
+		router_select.onchange=function(){
+		router = router_select.value;
+		fetch('/interfaz/'+router).then(function(response){
+		response.json().then(function(data){
+			let optionHTML='';
+			for (let interfaz of data.Interfaces){
+				optionHTML +='<option value="' + interfaz.id+'">'+interfaz.name+'<option>'; 
+				}
+				
+				interfaz_select.innerHTML = optionHTML;
+			});
+		});
+		}
+	</script>
   </body>
 </html>

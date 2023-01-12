@@ -1,9 +1,16 @@
 from flask import Flask, request, jsonify, send_file, render_template
+from wtforms import SelectField
+from flask_wtf import FlaskForm 
 from red import Red
 import logging
 import networkx as nx
 import json
 from scapy.all import conf
+import os
+import threading
+
+SECRET_KEY = os.urandom(32)
+
 
 # logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', handlers=[logging.FileHandler('app.log')])
 logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
@@ -11,7 +18,12 @@ logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
 app = Flask(__name__)
 red = None
 routersCredentialsList = {}
+app.config['SECRET_KEY'] = SECRET_KEY
 
+class Form(FlaskForm):
+	router = SelectField('router', choices=[])
+	interfaz = SelectField('interfaz', choices=[])
+	intervalo = SelectField('intervalo', choices=[])
 
 @app.get('/router')
 def registrarRouter():
@@ -80,12 +92,54 @@ def levantarSNMP(router):
 
     return jsonify({"status": "ok"})
 
-@app.get('/monitorear')
+@app.route('/monitorear',methods=['GET','POST'])
 def monitorearInterfaz():
     """ Realizando monitoreo en interfaz de router """
-    # Obteniendo parametros desde la ip
-    #print(red.routers)
-    return render_template('interfaz.html',routers = red.routers)
+    form = Form()
+    routers=[]
+    for r in red.routers.keys():
+    	routers.append((r,r))
+    
+    form.router.choices = routers
+    
+    form.intervalo.choices = [('5','5'),('10','10'),('15','15'),('30','30'),('40','40'),('60','60')]
+    
+    r = list(red.routers.keys())[0]
+    
+    interfaces=[]
+    
+    for i in red.routers[r]['interfacesActivas']:
+    	interfaces.append((i,i))
+    
+    form.interfaz.choices=interfaces
+    
+    if request.method=="POST":
+      
+       
+        router = red.routers[r]['ip']
+
+        monitoreoHilo= threading.Thread(target=red.monitoreo,args=(red.routers[form.router.data]['ip'],form.interfaz.data,form.intervalo.data,))
+        monitoreoHilo.start()
+        return render_template('monitoreo.html',router=form.router.data,interfaz= form.interfaz.data)
+    
+    return render_template('interfaz.html',form=form)
+    
+@app.route('/interfaz/<router>')
+def interfaz(router):
+	interfaces = red.routers[router]['interfacesActivas']
+	
+	interArr =[]
+	
+	for inter in interfaces:
+		intObt={}
+		intObt['id']= inter
+		intObt['name'] =inter
+		interArr.append(intObt)
+	
+	return jsonify({'Interfaces':interArr})
+		
+	
+
 
 @app.post('/monitorear')
 def monitorearInterfazView():
@@ -97,3 +151,21 @@ def monitorearInterfazView():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
