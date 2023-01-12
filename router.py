@@ -20,16 +20,7 @@ class Router:
             self.obtenerProtocolosActivos()
 
     def obtenerProtocolosActivos(self):
-        child = pexpect.spawn('telnet '+ self.ip)
-        child.expect('Username: ')
-        child.sendline(self.user)
-        child.expect('Password: ')
-        child.sendline(self.password)
-        child.expect(self.name+">")
-        child.sendline('enable')
-        child.expect('Password: ')
-        child.sendline(self.enable)
-        child.expect(self.name+"#")
+        child = self.getChild()
         child.sendline('show ip protocols summary')
         child.expect(self.name+"#")
         protocols = child.before.decode().split("\n")[4:-1]
@@ -39,6 +30,19 @@ class Router:
         child.close()
 
 
+    def getChild(self):
+        child = pexpect.spawn('telnet '+ self.ip)
+        child.expect('Username: ')
+        child.sendline(self.user)
+        child.expect('Password: ')
+        child.sendline(self.password)
+        if(self.enable != ""):
+            child.expect(self.name+">")
+            child.sendline('enable')
+            child.expect('Password: ')
+            child.sendline(self.enable)
+        child.expect(self.name+"#")
+        return child
 
     def buscarVecinos(self, red,revisados):
         if self.name in revisados: # Si ya fue obtenido, no lo volvemos a obtener
@@ -47,18 +51,7 @@ class Router:
         #logging.debug(mensaje)
 
         """ Nos conectamos al router """
-        child = pexpect.spawn('telnet '+ self.ip)
-        child.expect('Username: ')
-        child.sendline(credenciales["nombreU"])
-        child.expect('Password: ')
-        child.sendline(credenciales["password"])
-
-        """Obtenemos la tabla de dispositivos conectados """
-        child.expect(self.name+">")
-        child.sendline('enable')
-        child.expect('Password: ')
-        child.sendline(credenciales["enable"])
-        child.expect(self.name+"#")
+        child = self.getChild()
         child.sendline('show cdp ne | begin Device') # Obtenemos la tabla de dispositivos
         child.expect(self.name+"#")
         routersVecinos = child.before.decode().split("\r\n")
@@ -99,14 +92,7 @@ class Router:
         logging.debug(mensaje)
 
         """ Nos conectamos al router """
-        child = pexpect.spawn('telnet '+ self.ip)
-        child.expect('Username: ')
-        child.sendline(self.user)
-        child.expect('Password: ')
-        child.sendline(self.password)
-
-        """ Configuramos el snmp"""
-        child.expect(self.name+"#")
+        child = self.getChild()
         child.sendline("snpm-server comunity | i snmp");
         child.expect(self.name+"#")
         child.sendline("snmp-server enable traps snmp linkdown linkup");
@@ -117,16 +103,7 @@ class Router:
 
 
     def getConnectedNetworks(self):
-        child = pexpect.spawn('telnet '+ self.ip)
-        child.expect('Username: ')
-        child.sendline(self.user)
-        child.expect('Password: ')
-        child.sendline(self.password)
-        child.expect(self.name+">")
-        child.sendline('enable')
-        child.expect('Password: ')
-        child.sendline(self.enable)
-        child.expect(self.name+"#")
+        child = self.getChild()
         child.sendline("sh ip route c")
         child.expect(self.name+"#")
         sout = child.before.decode().split("\n")[1:-1]
@@ -142,16 +119,7 @@ class Router:
         return ips
 
     def EIGRP(self):
-        child = pexpect.spawn('telnet '+ self.ip)
-        child.expect('Username: ')
-        child.sendline(self.user)
-        child.expect('Password: ')
-        child.sendline(self.password)
-        child.expect(self.name+'>')
-        child.sendline('enable')
-        child.expect('Password: ')
-        child.sendline(self.enable)
-        child.expect(self.name+'#')
+        child = self.getChild()
         child.sendline("conf t")
         child.expect_exact(self.name+'(config)#')
         if not self.protocols["EIGRP"]["enable"]:
@@ -183,16 +151,7 @@ class Router:
 
 
     def RIP(self):
-        child = pexpect.spawn('telnet '+ self.ip)
-        child.expect('Username: ')
-        child.sendline(self.user)
-        child.expect('Password: ')
-        child.sendline(self.password)
-        child.expect(self.name+'>')
-        child.sendline('enable')
-        child.expect('Password: ')
-        child.sendline(self.enable)
-        child.expect(self.name+'#')
+        child = self.getChild()
         child.sendline("conf t")
         child.expect_exact(self.name+'(config)#')
         if not self.protocols["RIP"]["enable"]:
@@ -233,16 +192,7 @@ class Router:
         return False
 
     def OSPF(self):
-        child = pexpect.spawn('telnet '+ self.ip)
-        child.expect('Username: ')
-        child.sendline(self.user)
-        child.expect('Password: ')
-        child.sendline(self.password)
-        child.expect(self.name+'>')
-        child.sendline('enable')
-        child.expect('Password: ')
-        child.sendline(self.enable)
-        child.expect(self.name+'#')
+        child = self.getChild()
         child.sendline('configure terminal')
         child.expect_exact(self.name+'(config)#')
         if not self.protocols["OSPF"]["enable"]:
