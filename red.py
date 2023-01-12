@@ -23,16 +23,16 @@ class Red():
         # Generando gráfico
         G = nx.Graph()
         for router in self.routers:
-            if(self.routers[router]["user"] != None):
+            if(self.routers[router].user != None):
                 G.add_node(router, name=router,color = "green")
-                for pc in self.routers[router]["pcConectadas"]:
+                for pc in self.routers[router].pcConectadas:
                     G.add_node(router, name=pc)
                     G.add_edge(router, pc)
             else:
                 G.add_node(router, name=router,color = "yellow")
         for r1 in self.routers:
-            if( self.routers[r1]["conectados"] != None):
-                for r2 in self.routers[r1]["conectados"]:
+            if( self.routers[r1].conectados != None):
+                for r2 in self.routers[r1].conectados:                    
                     G.add_edge(r1, r2)
         return G
         #nx.draw_networkx(G, with_labels=True, node_color="g") # Creando gráfico
