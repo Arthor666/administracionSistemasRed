@@ -139,7 +139,9 @@ def interfaz(router):
 	return jsonify({'Interfaces':interArr})
 		
 	
-
+@app.route('/direccionarInicio')
+def inicio():
+    return render_template('index.html')
 
 @app.post('/monitorear')
 def monitorearInterfazView():
