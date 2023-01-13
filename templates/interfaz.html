@@ -2,18 +2,23 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+	<link rel="stylesheet" type="text/css" href="/static/css/style_generico.css"> 
+	<link rel="stylesheet" href="{{url_for('static', filename = 'css/styles.css')}}">
     <title>Router</title>
   </head>
   <body>
-    <h2>Monitorear Interfaces</h2>
-    <form method="post">
-    	{{form.csrf_token}}
-    	{{form.router}}
-    	{{form.interfaz}}
-    	{{form.intervalo}}
-    	<input type ="Submit">
-
-</form>
+    <div class="cont-monitorear-interfaz">
+		<h2>Monitorear interfaz</h2>
+		<div class="cont-monitorear-forms">
+		<form method="post" class="forms">
+				{{form.csrf_token}}
+				{{form.router}}
+				{{form.interfaz}}
+				{{form.intervalo}}
+				<input type ="Submit" class="btn">
+		</form>
+		</div>
+	</div>
 	<script>
 		let router_select = document.getElementById('router');
 		let interfaz_select = document.getElementById('interfaz');
