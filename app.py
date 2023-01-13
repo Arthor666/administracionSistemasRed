@@ -1,5 +1,8 @@
 from flask import Flask, request, jsonify, send_file, render_template
-from wtforms import SelectField
+from wtforms import SelectField,StringField
+from wtforms import StringField, FormField, FieldList, IntegerField,BooleanField
+from wtforms.validators import Optional
+from wtforms import validators
 from flask_wtf import FlaskForm
 from red import Red
 import logging
@@ -8,6 +11,9 @@ import json
 from scapy.all import conf
 import os
 import threading
+from pysnmp.hlapi import *
+from pysnmp.entity.rfc3413.oneliner import cmdgen
+
 
 SECRET_KEY = os.urandom(32)
 
@@ -18,12 +24,23 @@ logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
 app = Flask(__name__)
 red = None
 app.config['SECRET_KEY'] = SECRET_KEY
-routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':'password123'}}
+routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':''}}
 
 class Form(FlaskForm):
 	router = SelectField('router', choices=[])
 	interfaz = SelectField('interfaz', choices=[])
 	intervalo = SelectField('intervalo', choices=[])
+
+class FormSnmp(FlaskForm):
+    router = SelectField('router', choices=[])
+    name    = StringField(u'Nombre', [validators.DataRequired(), validators.length(max=30)])
+    desc    = StringField(u'Descripcion', [validators.DataRequired(), validators.length(max=100)])
+    cont    = StringField(u'Contacto', [validators.DataRequired(), validators.length(max=50)])
+    local    = StringField(u'Localizacion', [validators.DataRequired(), validators.length(max=50)])
+    chbx1 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
+    chbx2 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
+    chbx3 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
+    chbx4 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
 
 @app.get('/router')
 def registrarRouter():
@@ -145,20 +162,13 @@ def monitorearInterfaz():
     routers=[]
     for r in red.routers.keys():
     	routers.append((r,r))
-
     form.router.choices = routers
-
     form.intervalo.choices = [('5','5'),('10','10'),('15','15'),('30','30'),('40','40'),('60','60')]
-
     r = list(red.routers.keys())[0]
-
     interfaces=[]
-
     for i in red.routers[r].interfaces:
     	interfaces.append((i,i))
-
     form.interfaz.choices=interfaces
-
     if request.method=="POST":
         router = red.routers[r].ip
         monitoreoHilo= threading.Thread(target=red.monitoreo,args=(red.routers[form.router.data].ip,form.interfaz.data,form.intervalo.data,))
@@ -166,6 +176,39 @@ def monitorearInterfaz():
         return render_template('monitoreo.html',router=form.router.data,interfaz= form.interfaz.data)
 
     return render_template('interfaz.html',form=form)
+
+
+@app.route('/configurarSnmp',methods=['GET','POST'])
+def configurarSnmp():
+
+@app.route('/configurarSnmp',methods=['GET','POST'])
+def configurarSnmp():
+    """ Realizando monitoreo en interfaz de router """
+    form = FormSnmp()
+    routers=[]
+    comunity= 'secreta'
+    for r in red.routers.keys():
+        routers.append((red.routers[r].ip,r))
+    form.router.choices = routers
+    if request.method=="POST":
+        router = red.routers[r].ip
+
+        red.modificarMib(form.router.data,form.name.data,form.desc.data,form.cont.data,form.local.data,'secreta')
+        
+        form.name.data = red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.5.0')
+
+        if(form.desc.data ==None):
+            form.desc.data = red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.1.0')
+        
+        if(form.cont.data==None):
+            form.cont.data = red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.4.0')
+        
+        if(form.local.data==None):
+            form.local.data =    red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.6.0')
+
+
+        return render_template('mostrarMib.html',form = form)
+    return render_template('mib.html',form=form)
 
 @app.route('/interfaz/<router>')
 def interfaz(router):

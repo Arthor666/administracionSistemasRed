@@ -6,6 +6,10 @@ from pysnmp.entity.rfc3413.oneliner import cmdgen
 import threading
 import datetime
 import time
+from pysnmp.hlapi import *
+from pysnmp.entity.rfc3413.oneliner import cmdgen
+
+
 cmdGen = cmdgen.CommandGenerator()
 
 class Red():
@@ -48,7 +52,7 @@ class Red():
         else:
             raise Exception("Router no encontrado")
 
-    def snmp_query(self,host, community, oid):
+    def snmp_get(self,host, community, oid):
         errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(cmdgen.CommunityData(community),cmdgen.UdpTransportTarget((host, 161)),oid)
 
         if errorIndication:
@@ -63,7 +67,24 @@ class Red():
             else:
                 for name, val in varBinds:
                     return(str(val))
+    def snmp_set(self,host, community, oid,value):
+        g = setCmd(SnmpEngine(),CommunityData(community),UdpTransportTarget((host, 161)),ContextData(),ObjectType(ObjectIdentity('SNMPv2-MIB', oid, 0),value))
+        next(g)
 
+
+    def modificarMib(self,host,name,desc,cont,local,comunity):
+        print(host,name,desc,cont,local,comunity)
+        if(name!=None):
+            self.snmp_set(host,comunity,'sysName',name)
+
+        if(desc!=None):
+            self.snmp_set(host,comunity,'sysDescr',desc)
+        
+        if(cont!=None):
+            self.snmp_set(host,comunity,'sysContact',cont)
+        
+        if(local!=None):
+            self.snmp_set(host,comunity,'sysLocation',local)
 
     def grafica(self,x,y,rectas,id,titulo):
         print("Haciendo grafica")
@@ -153,19 +174,19 @@ class Red():
 
         while True :#cont < int(intervalo):
             if(cont==1):
-                result = int(self.snmp_query(host, community, oidIn))
-                result1 = int(self.snmp_query(host, community, oidOut))
-                result2 = int(self.snmp_query(host, community, oidErroInr))
-                result3 = int(self.snmp_query(host, community, oidErrorOut))
+                result = int(self.snmp_get(host, community, oidIn))
+                result1 = int(self.snmp_get(host, community, oidOut))
+                result2 = int(self.snmp_get(host, community, oidErroInr))
+                result3 = int(self.snmp_get(host, community, oidErrorOut))
             else:
                 aux = result
                 aux1= result1
                 aux2= result2
                 aux3= result3
-                result = int(self.snmp_query(host, community, oidIn))
-                result1 = int(self.snmp_query(host, community, oidOut))
-                result2 = int(self.snmp_query(host, community, oidErroInr))
-                result3 = int(self.snmp_query(host, community, oidErrorOut))
+                result = int(self.snmp_get(host, community, oidIn))
+                result1 = int(self.snmp_get(host, community, oidOut))
+                result2 = int(self.snmp_get(host, community, oidErroInr))
+                result3 = int(self.snmp_get(host, community, oidErrorOut))
                 #print(result)
                 paquetes =  result - aux
                 paquetes1 =  result1 - aux1

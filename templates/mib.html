@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>MIB</title>
+  </head>
+  <body>
+    
+    <form method="post">
+    <table>
+        <th>
+            <td>
+                <h2>Modificar Valores en la MIB</h2>
+            </td>
+        </th>
+        <tr>
+            <td>Router</td>
+            <td>{{form.router}}</td>
+            
+        </tr>
+        <tr>
+            <td>Nombre</td>
+            <td>{{form.name(disabled=True)}}</td>
+            <td> {{form.chbx1}}</td>
+        </tr>
+
+        <tr>
+            <td>Contacto</td>
+            <td>{{form.cont(disabled=True)}}</td>
+            <td>{{form.chbx2}}</td>
+        </tr>
+        <tr>
+            <td>Localizacion</td>
+            <td>{{form.local(disabled=True)}}</td>
+            <td> {{form.chbx3}} </td>
+        </tr>
+        <tr>
+            <td>Descripcion</td>
+            <td>{{form.desc(disabled=True)}}</td>
+            <td> {{form.chbx4}} </td>
+        </tr>
+
+    </table>
+
+    	<input type ="Submit">
+
+</form>
+<script>
+    function disableTextBox() {
+        console.log
+        // Get the checkbox
+        var checkBox = document.getElementById("chbx1");
+        var checkBox1 = document.getElementById("chbx2");
+        var checkBox2 = document.getElementById("chbx3");
+        var checkBox3 = document.getElementById("chbx4");
+
+        // If the checkbox is checked, display the output text
+        if (checkBox.checked == false){
+            document.getElementById("name").disabled = true;
+            document.getElementById("name").value="";
+        } else {
+            document.getElementById("name").disabled = false;
+            
+        }
+        if (checkBox1.checked == false){
+            document.getElementById("cont").disabled = true;
+            document.getElementById("cont").value="";
+        } else {
+            document.getElementById("cont").disabled = false;
+        }
+        if (checkBox2.checked == false){
+            document.getElementById("local").disabled = true;
+            document.getElementById("local").value="";
+        } else {
+            document.getElementById("local").disabled = false;
+        }
+        if (checkBox3.checked == false){
+            document.getElementById("desc").disabled = true;
+            document.getElementById("desc").value="";
+        } else {
+            document.getElementById("desc").disabled = false;
+        }
+    }
+  </script>
+  </body>
+</html>

@@ -3,6 +3,12 @@ import getpass
 import logging
 import time
 from ipaddress import IPv4Address
+import paramiko
+from pysnmp.hlapi import *
+from pysnmp.entity.rfc3413.oneliner import cmdgen
+
+
+
 
 class Router:
     def __init__(self, ip, name, user="root", password="root",enable = "",protocols = {},conectados = None,interfaces = {},pcConectadas = {}):
@@ -222,6 +228,8 @@ class Router:
 
     def monitorear(self,intefaz, periodo):
         pass
+    
+        
 
     def obtenerInterfaces(self):
         mensaje = "Conectando a " + self.name
@@ -233,10 +241,12 @@ class Router:
         child.sendline(self.user)
         child.expect('Password: ')
         child.sendline(self.password)
-        child.expect(self.name+'>')
-        child.sendline('enable')
-        child.expect('Password: ')
-        child.sendline(self.enable)
+        if(self.enable != ""):
+            child.expect(self.name+">")
+            child.sendline('enable')
+            child.expect('Password: ')
+            child.sendline(self.enable)
+       
         """ Configuramos el snmp"""
         child.expect(self.name + "#")
         child.sendline("show interfaces accounting");
