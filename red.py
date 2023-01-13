@@ -8,15 +8,20 @@ import datetime
 import time
 from pysnmp.hlapi import *
 from pysnmp.entity.rfc3413.oneliner import cmdgen
-
+import pysnmp
+from pysnmp.entity import engine, config
+from pysnmp.carrier.asyncore.dgram import udp
+from pysnmp.entity.rfc3413 import ntfrcv
 
 cmdGen = cmdgen.CommandGenerator()
+
 
 class Red():
 
     def __init__(self,routersCredentialsList):
         self.routersCredentialsList = routersCredentialsList
         self.routers = {}
+
 
     def leerTopologia(self):
         if(self.routersCredentialsList == [] or self.routersCredentialsList == None):
@@ -51,6 +56,45 @@ class Red():
             enrutador.configurarSNMP()
         else:
             raise Exception("Router no encontrado")
+
+
+    def getEstado(self):
+        return self.estado
+
+    def cbFun(self,snmpEngine, stateReference, contextEngineId, contextName,varBinds, cbCtx):
+        print("Mensaje nuevo de traps recibido");
+        logging.info("Mensaje nuevo de traps recibido")
+        for name, val in varBinds:   
+            logging.info('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
+            print('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
+
+ 
+         
+
+
+    
+    def snmpTraps(self):
+
+        TrapAgentAddress = '192.168.0.10'
+        Port = 162;
+
+        snmpEngine = engine.SnmpEngine()
+        
+        print("El gestor esta escuchando SNMP Traps en "+TrapAgentAddress+" , Puerto : " +str(Port));
+        
+        config.addTransport(snmpEngine,udp.domainName + (1,),udp.UdpTransport().openServerMode((TrapAgentAddress,Port)))
+
+        ntfrcv.NotificationReceiver(snmpEngine, self.cbFun)
+
+        snmpEngine.transportDispatcher.jobStarted(1) 
+
+        try:
+            snmpEngine.transportDispatcher.runDispatcher()
+        except AssertionError as err:
+            snmpEngine.transportDispatcher.closeDispatcher()
+            raise
+
+
 
     def snmp_get(self,host, community, oid):
         errorIndication, errorStatus, errorIndex, varBinds = cmdGen.getCmd(cmdgen.CommunityData(community),cmdgen.UdpTransportTarget((host, 161)),oid)

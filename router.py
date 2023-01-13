@@ -99,11 +99,15 @@ class Router:
 
         """ Nos conectamos al router """
         child = self.getChild()
-        child.sendline("snpm-server comunity | i snmp");
+
+        
+
+
+        child.sendline("snmp-server community secreta ro 10");
         child.expect(self.name+"#")
-        child.sendline("snmp-server enable traps snmp linkdown linkup");
+        child.sendline("snmp-server host 192.168.0.10 secreta");
         child.expect(self.name+"#")
-        child.sendline("snmp-server host 10.0.1.1 version 2c comun_pruebas");
+        child.sendline("snmp-server enable traps");
         child.expect(self.name+"#")
 
 

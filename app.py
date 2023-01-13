@@ -23,6 +23,9 @@ logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
 
 app = Flask(__name__)
 red = None
+
+
+
 app.config['SECRET_KEY'] = SECRET_KEY
 routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':''}}
 
@@ -41,6 +44,9 @@ class FormSnmp(FlaskForm):
     chbx2 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
     chbx3 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
     chbx4 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
+
+
+
 
 @app.get('/router')
 def registrarRouter():
@@ -110,6 +116,7 @@ def index():
     global red
     global routersCredentialsList
     red = Red(routersCredentialsList)
+    
     G = red.leerTopologia()
     d = nx.json_graph.node_link_data(G)  # node-link format to serialize
     # write json
@@ -177,9 +184,6 @@ def monitorearInterfaz():
 
     return render_template('interfaz.html',form=form)
 
-
-@app.route('/configurarSnmp',methods=['GET','POST'])
-def configurarSnmp():
 
 @app.route('/configurarSnmp',methods=['GET','POST'])
 def configurarSnmp():
