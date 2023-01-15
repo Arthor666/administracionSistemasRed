@@ -8,7 +8,7 @@
     <title>Administración de redes</title>
     <script type="text/javascript" src="{{url_for('static',filename = 'js/d3.v4.min.js')}}"></script>
     <link type="text/css" rel="stylesheet" href="{{url_for('static', filename = 'css/force.css')}}" />
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{url_for('static',filename = 'js/tailwind.min.js')}}"></script>
     <link rel="stylesheet" href="{{url_for('static', filename = 'css/styles.css')}}">
 </head>
 
@@ -34,14 +34,11 @@
                 <div class="opciones flex flex-col items-center border-t-2 border-gray-300">
                     <h2 class="text-gray-700 font-bold text-center w-100 text-md mb-2 block">Opciones de administración
                     </h2>
-                    <div class="flex flex-row justify-center">
-                        <button id=""
-                            class="bg-sky-500 hover:bg-sky-800 text-slate-100 duration-200 font-bold px-2 py-1 rounded-md text-center text-sm mr-2">Getionar
-                            usuarios</button>
+                    <div class="flex flex-row justify-center">                        
                         <a id="" href="/router"
                             class="bg-sky-500 hover:bg-sky-800 text-slate-100 duration-200 font-bold px-2 py-1 rounded-md text-center text-sm mr-2">Gestionar
                             Routers</a>
-                        <a id=""
+                        <a id="" href ="/configurarSnmp"
                             class="bg-sky-500 hover:bg-sky-800 text-slate-100 duration-200 font-bold px-2 py-1 rounded-md text-center text-sm mr-2">Cambiar
                             conf. system de la MIB-II</a>
                         <a id="btn-monitorear" href="/monitorear"

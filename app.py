@@ -5,6 +5,7 @@ from wtforms.validators import Optional
 from wtforms import validators
 from flask_wtf import FlaskForm
 from red import Red
+from Hilo import Hilo
 import logging
 import networkx as nx
 import json
@@ -23,11 +24,12 @@ logging.basicConfig(level=logging.WARNING, format='%(levelname)s: %(message)s')
 
 app = Flask(__name__)
 red = None
+hiloActivo = None
 
 
 
 app.config['SECRET_KEY'] = SECRET_KEY
-routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':''}}
+routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':'password123'}}
 
 class Form(FlaskForm):
 	router = SelectField('router', choices=[])
@@ -66,7 +68,7 @@ def configureOSPF(rname):
         red.routers[rname].protocols["OSPF"] = {}
     red.routers[rname].protocols["OSPF"]["area"] = confOSPF["area"]
     if "enable" not in confOSPF:
-        red.routers[rname].protocols["OSPF"]["enable"] = False		
+        red.routers[rname].protocols["OSPF"]["enable"] = False
     else:
         red.routers[rname].protocols["OSPF"]["enable"] = True
     red.routers[rname].OSPF()
@@ -116,7 +118,7 @@ def index():
     global red
     global routersCredentialsList
     red = Red(routersCredentialsList)
-    
+
     G = red.leerTopologia()
     d = nx.json_graph.node_link_data(G)  # node-link format to serialize
     # write json
@@ -162,7 +164,7 @@ def levantarSNMP(router):
 
     return jsonify({"status": "ok"})
 
-@app.route('/monitorear',methods=['GET','POST'])
+@app.get('/monitorear')
 def monitorearInterfaz():
     """ Realizando monitoreo en interfaz de router """
     form = Form()
@@ -175,15 +177,20 @@ def monitorearInterfaz():
     interfaces=[]
     for i in red.routers[r].interfaces:
     	interfaces.append((i,i))
-    form.interfaz.choices=interfaces
-    if request.method=="POST":
-        router = red.routers[r].ip
-        monitoreoHilo= threading.Thread(target=red.monitoreo,args=(red.routers[form.router.data].ip,form.interfaz.data,form.intervalo.data,))
-        monitoreoHilo.start()
-        return render_template('monitoreo.html',router=form.router.data,interfaz= form.interfaz.data)
+    form.interfaz.choices=interfaces;return render_template('interfaz.html',form=form)
 
-    return render_template('interfaz.html',form=form)
-
+@app.post("/monitorear-form")
+def monitorearPost():
+	data = request.form
+	global hiloActivo
+	global red
+	if hiloActivo != None:
+		hiloActivo.kill()
+		hiloActivo.join()
+		del(hiloActivo)
+	hiloActivo = Hilo(red.routers[data["router"]].ip,data["intervalo"],data["interfaz"])
+	hiloActivo.start()
+	return render_template('monitoreo.html')
 
 @app.route('/configurarSnmp',methods=['GET','POST'])
 def configurarSnmp():
@@ -198,15 +205,15 @@ def configurarSnmp():
         router = red.routers[r].ip
 
         red.modificarMib(form.router.data,form.name.data,form.desc.data,form.cont.data,form.local.data,'secreta')
-        
+
         form.name.data = red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.5.0')
 
         if(form.desc.data ==None):
             form.desc.data = red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.1.0')
-        
+
         if(form.cont.data==None):
             form.cont.data = red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.4.0')
-        
+
         if(form.local.data==None):
             form.local.data =    red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.6.0')
 
@@ -217,6 +224,7 @@ def configurarSnmp():
 @app.route('/interfaz/<router>')
 def interfaz(router):
 	interfaces = red.routers[router].interfaces
+	ip = red.routers[router].ip
 
 	interArr =[]
 
@@ -226,7 +234,7 @@ def interfaz(router):
 		intObt['name'] =inter
 		interArr.append(intObt)
 
-	return jsonify({'Interfaces':interArr})
+	return jsonify({'Interfaces':interArr,'ip':ip})
 
 @app.route('/direccionarInicio')
 def inicio():
