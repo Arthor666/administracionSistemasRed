@@ -64,35 +64,12 @@ class Red():
     def cbFun(self,snmpEngine, stateReference, contextEngineId, contextName,varBinds, cbCtx):
         print("Mensaje nuevo de traps recibido");
         logging.info("Mensaje nuevo de traps recibido")
-        for name, val in varBinds:   
+        for name, val in varBinds:
             logging.info('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
             print('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
 
- 
-         
 
 
-    
-    def snmpTraps(self):
-
-        TrapAgentAddress = '192.168.0.10'
-        Port = 162;
-
-        snmpEngine = engine.SnmpEngine()
-        
-        print("El gestor esta escuchando SNMP Traps en "+TrapAgentAddress+" , Puerto : " +str(Port));
-        
-        config.addTransport(snmpEngine,udp.domainName + (1,),udp.UdpTransport().openServerMode((TrapAgentAddress,Port)))
-
-        ntfrcv.NotificationReceiver(snmpEngine, self.cbFun)
-
-        snmpEngine.transportDispatcher.jobStarted(1) 
-
-        try:
-            snmpEngine.transportDispatcher.runDispatcher()
-        except AssertionError as err:
-            snmpEngine.transportDispatcher.closeDispatcher()
-            raise
 
 
 
@@ -123,10 +100,10 @@ class Red():
 
         if(desc!=None):
             self.snmp_set(host,comunity,'sysDescr',desc)
-        
+
         if(cont!=None):
             self.snmp_set(host,comunity,'sysContact',cont)
-        
+
         if(local!=None):
             self.snmp_set(host,comunity,'sysLocation',local)
 

@@ -67,13 +67,13 @@ class Router:
         interfaces = [str(x.split()[1])+str(x.split()[2]) for x in routersVecinos ]
         """ Obtenemos la informacion de cada dispositivo conectado """
         red.routers[self.name].conectados = [x.split(".")[0] for x in conectados ]
+        vecinos = {}
         for dispositivo in conectados:
 
             child.sendline('sh cdp entry '+ dispositivo)
             child.expect(self.name+"#")
             info_dispositivo = child.before.decode().split()
 
-            vecinos = {}
             for linea in range(0, len(info_dispositivo)):
                 if 'address:' == info_dispositivo[linea]:
                     vecinos[str(info_dispositivo[linea+1])] =  dispositivo.split(".")[0]
@@ -100,7 +100,7 @@ class Router:
         """ Nos conectamos al router """
         child = self.getChild()
 
-        
+
 
 
         child.sendline("snmp-server community secreta ro 10");
@@ -232,8 +232,8 @@ class Router:
 
     def monitorear(self,intefaz, periodo):
         pass
-    
-        
+
+
 
     def obtenerInterfaces(self):
         mensaje = "Conectando a " + self.name
@@ -250,7 +250,7 @@ class Router:
             child.sendline('enable')
             child.expect('Password: ')
             child.sendline(self.enable)
-       
+
         """ Configuramos el snmp"""
         child.expect(self.name + "#")
         child.sendline("show interfaces accounting");

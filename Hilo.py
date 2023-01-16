@@ -8,6 +8,7 @@ from pysnmp.entity.rfc3413.oneliner import cmdgen
 import threading
 import time
 import matplotlib.pyplot as plt
+from scapy.all import *
 cmdGen = cmdgen.CommandGenerator()
 
 class Hilo(threading.Thread):
@@ -18,11 +19,12 @@ class Hilo(threading.Thread):
         self.intervalo = intervalo
         self.interfaz = interfaz
         self.killed = False
+        self.traps = []
 
     def kill(self):
         self.killed = True
 
-    def grafica(self,x,y,rectas,id,titulo):
+    def grafica(self,x,y,rectas,id,titulo,traps):
         print("Haciendo grafica")
         plt.scatter(x, y)
         plt.plot(x, y)
@@ -33,6 +35,9 @@ class Hilo(threading.Thread):
 
         for n in rectas:
             plt.vlines(x=n, ymin=0, ymax=1000)
+
+        for n in traps:
+            plt.vlines(x=n, ymin=0, ymax=1000,colors='k',linestyles="dotted")
 
         plt.savefig("static/grafica"+str(id)+".jpg", bbox_inches='tight')
         plt.clf()
@@ -54,12 +59,18 @@ class Hilo(threading.Thread):
                 for name, val in varBinds:
                     return(str(val))
 
+    def trapCatched(self,x,current):
+        interface = getattr(x["SNMP"]["SNMPtrapv1"]["SNMPvarbind"],"value")
+        if(interface.val == current):
+            self.traps.append(x.show())
+        return x.show()
+
     def run(self):
         oidIn= '1.3.6.1.2.1.2.2.1.10.'
         oidOut='1.3.6.1.2.1.2.2.1.16.'
         oidErroInr='1.3.6.1.2.1.2.2.1.14.'
         oidErrorOut='1.3.6.1.2.1.2.2.1.20.'
-
+        currentInterface = 0
         opcion=''
         inter = int(self.intervalo)
         match self.interfaz:
@@ -68,29 +79,32 @@ class Hilo(threading.Thread):
                 oidOut='1.3.6.1.2.1.2.2.1.16.1'
                 oidErroInr='1.3.6.1.2.1.2.2.1.14.1'
                 oidErrorOut='1.3.6.1.2.1.2.2.1.20.1'
+                currentInterface = 1
             case '1/0':
                 oidIn= '1.3.6.1.2.1.2.2.1.10.2'
                 oidOut='1.3.6.1.2.1.2.2.1.16.2'
                 oidErroInr='1.3.6.1.2.1.2.2.1.14.2'
                 oidErrorOut='1.3.6.1.2.1.2.2.1.20.2'
+                currentInterface = 2
             case '2/0':
                 oidIn='1.3.6.1.2.1.2.2.1.10.3'
                 oidOut='1.3.6.1.2.1.2.2.1.16.3'
                 oidErroInr='1.3.6.1.2.1.2.2.1.14.3'
                 oidErrorOut='1.3.6.1.2.1.2.2.1.20.3'
+                currentInterface = 3
             case '3/0':
                 oidIn='1.3.6.1.2.1.2.2.1.10.4'
                 oidOut='1.3.6.1.2.1.2.2.1.16.4'
                 oidErroInr='1.3.6.1.2.1.2.2.1.14.4'
                 oidErrorOut='1.3.6.1.2.1.2.2.1.20.4'
-            case _:                
+                currentInterface = 4
+            case _:
                 return None
 
 
         host = self.ip
         community = 'public'
         suma=0
-
         puntosx=[]
         puntosy=[]
 
@@ -108,14 +122,19 @@ class Hilo(threading.Thread):
         rectas2=[]
         rectas3=[]
 
+        rectaTrap = []
+        rectaTrap1 = []
+        rectaTrap2 = []
+        rectaTrap3 = []
+
         cont=1
 
         bandera=True
         bandera1=True
         bandera2=True
         bandera3=True
-
-
+        capture = AsyncSniffer(filter= "port 162",prn=lambda x:self.trapCatched(x,currentInterface))
+        capture.start()
 
         while not self.killed :#cont < int(intervalo):
             if(cont==1):
@@ -172,6 +191,13 @@ class Hilo(threading.Thread):
                     if bandera3 == False:
                         rectas3.append(cont*inter)
                         bandera3 = True
+                if(self.traps != []):
+                    self.traps.pop()
+                    rectaTrap.append(cont*inter)
+                    rectaTrap1.append(cont*inter)
+                    rectaTrap2.append(cont*inter)
+                    rectaTrap3.append(cont*inter)
+
 
                 puntosy.append(paquetes)
                 puntosx.append(cont*inter)
@@ -187,10 +213,10 @@ class Hilo(threading.Thread):
 
             cont = cont+1
             if cont>2:
-                self.grafica(puntosx,puntosy,rectas,1,'Paquetes de Entrada')
-                self.grafica(puntosx1,puntosy1,rectas1,2,'Paquetes de Salida')
-                self.grafica(puntosx2,puntosy2,rectas2,3,'Paquetes de Entrada Daniados')
-                self.grafica(puntosx3,puntosy3,rectas3,4,'Paquetes de Salida  Daniados')
+                self.grafica(puntosx,puntosy,rectas,1,'Paquetes de Entrada',rectaTrap)
+                self.grafica(puntosx1,puntosy1,rectas1,2,'Paquetes de Salida',rectaTrap1)
+                self.grafica(puntosx2,puntosy2,rectas2,3,'Paquetes de Entrada Daniados',rectaTrap2)
+                self.grafica(puntosx3,puntosy3,rectas3,4,'Paquetes de Salida  Daniados',rectaTrap3)
             time.sleep(int(self.intervalo))
-
+        capture.stop()
         print("Monitoreo Finalizado")
