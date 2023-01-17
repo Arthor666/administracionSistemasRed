@@ -12,6 +12,10 @@ import pysnmp
 from pysnmp.entity import engine, config
 from pysnmp.carrier.asyncore.dgram import udp
 from pysnmp.entity.rfc3413 import ntfrcv
+import netmiko
+from email.message import EmailMessage
+import ssl 
+import smtplib
 
 cmdGen = cmdgen.CommandGenerator()
 
@@ -21,6 +25,8 @@ class Red():
     def __init__(self,routersCredentialsList):
         self.routersCredentialsList = routersCredentialsList
         self.routers = {}
+        self.password = 'cymhfkjbpyotpzkn'
+        self.email = 'asr574039@gmail.com'
 
 
     def leerTopologia(self):
@@ -52,8 +58,16 @@ class Red():
 
     def configurarSNMP(self, router):
         if router in self.routers:
-            enrutador = Router(self.routers[router]["ip"], router, self.routers[router]["user"], self.routers[router]["password"])
+            enrutador = Router(self.routers[router].ip, router, self.routers[router].user, self.routers[router].password)
             enrutador.configurarSNMP()
+        else:
+            raise Exception("Router no encontrado")
+
+    def configurarSSh(self, router,u,p):
+        if router in self.routers:
+            enrutador = Router(self.routers[router].ip, router, self.routers[router].user, self.routers[router].password)
+            print(enrutador)
+            enrutador.CrearUsuarioSsh(u,p)
         else:
             raise Exception("Router no encontrado")
 
@@ -61,16 +75,36 @@ class Red():
     def getEstado(self):
         return self.estado
 
+    def enviaCorreo(self,mensaje):
+
+        to = 'asr574039@gmail.com'
+        subject = 'Trap'
+        body = 'mensaje'
+
+        em=EmailMessage()
+        em['From'] = email
+        em['To']=to
+        em['Subject']=subject
+        em.set_content(mensaje)
+
+        conexion = smtplib.SMTP(host='smtp.gmail.com',port=587)
+        conexion.ehlo()
+        conexion.starttls()
+        conexion.login(user=self.email,password=self.password)
+        conexion.sendmail(from_addr=email,to_addrs=to,msg=em.as_string())
+        conexion.quit
+
     def cbFun(self,snmpEngine, stateReference, contextEngineId, contextName,varBinds, cbCtx):
         print("Mensaje nuevo de traps recibido");
         logging.info("Mensaje nuevo de traps recibido")
         for name, val in varBinds:
             logging.info('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
-            print('%s = %s' % (name.prettyPrint(), val.prettyPrint()))
+            mensaje='%s = %s' % (name.prettyPrint(), val.prettyPrint())
+            print(mensaje)
+            self.enviaCorreo(mensaje)
+    
 
-
-
-
+    
 
 
     def snmp_get(self,host, community, oid):

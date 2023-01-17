@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Usuarios SSH</title>
+  </head>
+  <body>
+    <h2>Alta de usuario SSH</h2>
+    <form method="post">
+        {{form.router}}
+        {{form.user}}
+        {{form.password}}
+        <input type="submit">
+    </form>
+    <a id="btn-monitorear" href="/sshUsersVer"
+                            class="bg-sky-500 hover:bg-sky-800 text-slate-100 duration-200 font-bold px-2 py-1 rounded-md text-center text-sm mr-2">Visualizar usuarios</a>
+  </body>
+</html>

@@ -29,7 +29,7 @@ hiloActivo = None
 
 
 app.config['SECRET_KEY'] = SECRET_KEY
-routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':'password123'}}
+routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':''}}
 
 class Form(FlaskForm):
 	router = SelectField('router', choices=[])
@@ -47,7 +47,10 @@ class FormSnmp(FlaskForm):
     chbx3 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
     chbx4 = BooleanField('True',render_kw={"onclick": "disableTextBox()"})
 
-
+class FormSSh(FlaskForm):
+    router = SelectField('router', choices=[])
+    user = StringField(u'User', [validators.DataRequired(), validators.length(max=30)])
+    password = StringField(u'Password', [validators.DataRequired(), validators.length(max=30)])
 
 
 @app.get('/router')
@@ -220,6 +223,27 @@ def configurarSnmp():
 
         return render_template('mostrarMib.html',form = form)
     return render_template('mib.html',form=form)
+
+@app.route('/sshUsers',methods=['GET','POST'])
+def configurarSsh():
+   
+    form = FormSSh()
+    routers=[]
+    comunity= 'secreta'
+    for r in red.routers.keys():
+    	routers.append((r,r))
+    form.router.choices = routers
+    if request.method=="POST":
+        #print(red.routers)
+        red.configurarSSh(form.router.data,form.user.data,form.password.data)
+
+        return "test" #render_template('mostrarMib.html',form = form)
+    return render_template('sshUser.html',form=form)
+
+@app.route('/sshUsersVer',methods=['GET','POST'])
+def verSsh():
+ 
+    return render_template('sshUserView.html',form=red.routers)
 
 @app.route('/interfaz/<router>')
 def interfaz(router):

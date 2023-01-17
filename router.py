@@ -6,12 +6,11 @@ from ipaddress import IPv4Address
 import paramiko
 from pysnmp.hlapi import *
 from pysnmp.entity.rfc3413.oneliner import cmdgen
-
-
+from netmiko import ConnectHandler
 
 
 class Router:
-    def __init__(self, ip, name, user="root", password="root",enable = "",protocols = {},conectados = None,interfaces = {},pcConectadas = {}):
+    def __init__(self, ip, name, user="root", password="root",enable = "",protocols = {},conectados = None,interfaces = {},pcConectadas = {},usuariosSsh={}):
         self.ip = ip
         self.name = name
         self.user = user
@@ -21,6 +20,7 @@ class Router:
         self.interfaces = interfaces
         self.pcConectadas = pcConectadas
         self.protocols = protocols
+        self.usuariosSsh = usuariosSsh
         if(self.password != None):
             self.obtenerInterfaces()
             self.obtenerProtocolosActivos()
@@ -34,6 +34,46 @@ class Router:
         for p in protocols:
             self.protocols[p] = {"enable": True}
         child.close()
+
+    def getSsh(self):
+        router = {
+        'device_type': 'cisco_ios',
+        'ip': self.ip,
+        'username': self.user,
+        'password': self.password
+        }
+
+        device_conn = ConnectHandler(**router)
+        return device_conn
+
+    def obtenerUsuariosSsh(self):
+        device_conn = self.getSsh()
+        output = device_conn.send_command('show running-config | include user')
+        UsersInLines = output.splitlines()
+    
+        users=[]
+
+        for userLine in UsersInLines:
+            #print(userLine)
+            userDicAux={}
+            userLineList= userLine.split()
+            userDicAux['username']=userLineList[1]
+            userDicAux['privilage']=userLineList[3]
+            userDicAux['password']=userLineList[6]
+            users.append(userDicAux)
+        self.usuariosSsh=users
+
+        device_conn.disconnect()
+
+    def CrearUsuarioSsh(self,user,password):
+            print("Crea Usuario")
+            device_conn = self.getSsh()
+            config_commands =['username '+user+' privilege 15 password '+password]
+            setConfig = device_conn.send_config_set(config_commands)
+            #print('{}\n'.format(setConfig))
+            device_conn.disconnect()
+
+
 
 
     def getChild(self):
@@ -65,6 +105,7 @@ class Router:
         routersVecinos = [x for x in routersVecinos if x != '' ]
         conectados = [x.split()[0] for x in routersVecinos]
         interfaces = [str(x.split()[1])+str(x.split()[2]) for x in routersVecinos ]
+        self.obtenerUsuariosSsh()
         """ Obtenemos la informacion de cada dispositivo conectado """
         red.routers[self.name].conectados = [x.split(".")[0] for x in conectados ]
         vecinos = {}
@@ -109,8 +150,9 @@ class Router:
         child.expect(self.name+"#")
         child.sendline("snmp-server enable traps");
         child.expect(self.name+"#")
-
-
+    
+    
+        
 
     def getConnectedNetworks(self):
         child = self.getChild()
