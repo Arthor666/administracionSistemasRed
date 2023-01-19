@@ -29,7 +29,7 @@ hiloActivo = None
 
 
 app.config['SECRET_KEY'] = SECRET_KEY
-routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':''}}
+routersCredentialsList = {'R1':{'ip':'192.168.0.1','nombre': 'R1','nombreU' :"r1router",'password':'secret12','enable':'password123'}}
 
 class Form(FlaskForm):
 	router = SelectField('router', choices=[])
@@ -200,14 +200,14 @@ def configurarSnmp():
     """ Realizando monitoreo en interfaz de router """
     form = FormSnmp()
     routers=[]
-    comunity= 'secreta'
+    comunity= 'public'
     for r in red.routers.keys():
         routers.append((red.routers[r].ip,r))
     form.router.choices = routers
     if request.method=="POST":
         router = red.routers[r].ip
 
-        red.modificarMib(form.router.data,form.name.data,form.desc.data,form.cont.data,form.local.data,'secreta')
+        red.modificarMib(form.router.data,form.name.data,form.desc.data,form.cont.data,form.local.data,'public')
 
         form.name.data = red.snmp_get(form.router.data,comunity,'1.3.6.1.2.1.1.5.0')
 
@@ -226,10 +226,10 @@ def configurarSnmp():
 
 @app.route('/sshUsers',methods=['GET','POST'])
 def configurarSsh():
-   
+
     form = FormSSh()
     routers=[]
-    comunity= 'secreta'
+    comunity= 'public'
     for r in red.routers.keys():
     	routers.append((r,r))
     form.router.choices = routers
@@ -242,7 +242,7 @@ def configurarSsh():
 
 @app.route('/sshUsersVer',methods=['GET','POST'])
 def verSsh():
- 
+
     return render_template('sshUserView.html',form=red.routers)
 
 @app.route('/interfaz/<router>')

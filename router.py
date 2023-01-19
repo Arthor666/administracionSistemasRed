@@ -40,26 +40,26 @@ class Router:
         'device_type': 'cisco_ios',
         'ip': self.ip,
         'username': self.user,
-        'password': self.password
+        'password': self.password,
+        'secret': self.enable
         }
 
         device_conn = ConnectHandler(**router)
+        device_conn.enable()
         return device_conn
 
     def obtenerUsuariosSsh(self):
         device_conn = self.getSsh()
         output = device_conn.send_command('show running-config | include user')
         UsersInLines = output.splitlines()
-    
         users=[]
-
         for userLine in UsersInLines:
             #print(userLine)
             userDicAux={}
-            userLineList= userLine.split()
+            userLineList= userLine.split()            
             userDicAux['username']=userLineList[1]
             userDicAux['privilage']=userLineList[3]
-            userDicAux['password']=userLineList[6]
+            userDicAux['password']=userLineList[4]
             users.append(userDicAux)
         self.usuariosSsh=users
 
@@ -150,9 +150,9 @@ class Router:
         child.expect(self.name+"#")
         child.sendline("snmp-server enable traps");
         child.expect(self.name+"#")
-    
-    
-        
+
+
+
 
     def getConnectedNetworks(self):
         child = self.getChild()
@@ -278,23 +278,9 @@ class Router:
 
 
     def obtenerInterfaces(self):
-        mensaje = "Conectando a " + self.name
-        logging.debug(mensaje)
-
-        """ Nos conectamos al router """
-        child = pexpect.spawn('telnet ' + self.ip)
-        child.expect('Username: ')
-        child.sendline(self.user)
-        child.expect('Password: ')
-        child.sendline(self.password)
-        if(self.enable != ""):
-            child.expect(self.name+">")
-            child.sendline('enable')
-            child.expect('Password: ')
-            child.sendline(self.enable)
+        child = self.getChild()
 
         """ Configuramos el snmp"""
-        child.expect(self.name + "#")
         child.sendline("show interfaces accounting");
         child.expect(self.name + "#")
         r = child.before

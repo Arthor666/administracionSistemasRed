@@ -14,7 +14,7 @@ from pysnmp.carrier.asyncore.dgram import udp
 from pysnmp.entity.rfc3413 import ntfrcv
 import netmiko
 from email.message import EmailMessage
-import ssl 
+import ssl
 import smtplib
 
 cmdGen = cmdgen.CommandGenerator()
@@ -65,9 +65,7 @@ class Red():
 
     def configurarSSh(self, router,u,p):
         if router in self.routers:
-            enrutador = Router(self.routers[router].ip, router, self.routers[router].user, self.routers[router].password)
-            print(enrutador)
-            enrutador.CrearUsuarioSsh(u,p)
+            self.routers[router].CrearUsuarioSsh(u,p)            
         else:
             raise Exception("Router no encontrado")
 
@@ -102,9 +100,9 @@ class Red():
             mensaje='%s = %s' % (name.prettyPrint(), val.prettyPrint())
             print(mensaje)
             self.enviaCorreo(mensaje)
-    
 
-    
+
+
 
 
     def snmp_get(self,host, community, oid):
